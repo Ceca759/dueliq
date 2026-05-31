@@ -16,15 +16,22 @@
         .shake { animation: shake 0.4s ease; }
         @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .pulse-dot { animation: pulse-dot 1.5s infinite; }
+        @keyframes timer-shrink { from { width: 100%; } to { width: 0%; } }
         .game-card { transition: all 0.2s ease; background: #13121f; border: 1px solid #2a2740; }
         .game-card:hover { transform: translateY(-4px); border-color: #7c3aed; box-shadow: 0 20px 40px rgba(124,58,237,0.15); }
+        .game-card.disabled { opacity: 0.5; pointer-events: none; }
         .btn-primary { background: #7c3aed; color: white; transition: all 0.2s; }
         .btn-primary:hover { background: #6d28d9; transform: translateY(-1px); }
         .move-btn { transition: all 0.15s ease; }
         .move-btn:hover { transform: scale(1.08); }
         .move-btn:active { transform: scale(0.96); }
         .move-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-        .glass { background: #13121f; border: 1px solid #2a2740; }
+        .trivia-opt { transition: all 0.15s ease; background: #1a1828; border: 1px solid #2a2740; cursor: pointer; }
+        .trivia-opt:hover:not(:disabled) { border-color: #7c3aed; background: #1e1d2e; transform: translateY(-1px); }
+        .trivia-opt.correct { background: #14532d !important; border-color: #22c55e !important; color: #86efac !important; }
+        .trivia-opt.wrong { background: #450a0a !important; border-color: #ef4444 !important; color: #fca5a5 !important; }
+        .trivia-opt.reveal { background: #14532d !important; border-color: #22c55e !important; color: #86efac !important; }
+        .trivia-opt:disabled { cursor: not-allowed; }
         input { background: #1a1828 !important; border: 1px solid #2a2740 !important; color: #f1f0ff !important; }
         input:focus { border-color: #7c3aed !important; outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
         input::placeholder { color: #4a4768 !important; }
@@ -43,7 +50,6 @@
                 <span class="brand text-xl font-bold" style="color:#f1f0ff;">DuelIQ</span>
             </div>
             <div class="flex items-center gap-3">
-                <div id="connection-status" class="text-sm"></div>
                 <div id="nav-wallet" class="hidden items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
                     <i class="fa-solid fa-wallet text-xs"></i>
                     <span id="wallet-display">$100.00</span>
@@ -100,7 +106,6 @@
         <p class="mb-8" style="color:#6b6888;">Pick a game and get matched instantly</p>
 
         <div class="grid md:grid-cols-3 gap-6">
-
             <!-- RPS -->
             <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('rps')">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🪨</div>
@@ -110,41 +115,29 @@
                 </div>
                 <p class="text-sm mb-4" style="color:#6b6888;">Best of 5 · Real-time multiplayer</p>
                 <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <div class="text-xl font-bold" style="color:#a78bfa;">$5</div>
-                        <div class="text-xs" style="color:#4a4768;">entry fee</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm font-semibold" style="color:#f1f0ff;">$9</div>
-                        <div class="text-xs" style="color:#4a4768;">winner gets</div>
-                    </div>
+                    <div><div class="text-xl font-bold" style="color:#a78bfa;">$5</div><div class="text-xs" style="color:#4a4768;">entry fee</div></div>
+                    <div class="text-right"><div class="text-sm font-semibold" style="color:#f1f0ff;">$9</div><div class="text-xs" style="color:#4a4768;">winner gets</div></div>
                 </div>
                 <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
             </div>
 
             <!-- Trivia -->
-            <div class="game-card rounded-2xl p-6" style="opacity:0.5;">
+            <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('trivia')">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🧠</div>
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="font-bold text-lg" style="color:#f1f0ff;">Trivia Battle</h3>
-                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#1e1d2e; color:#6b6888;">Soon</span>
+                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#14532d; color:#86efac;">Live</span>
                 </div>
-                <p class="text-sm mb-4" style="color:#6b6888;">10 questions · Fastest wins</p>
+                <p class="text-sm mb-4" style="color:#6b6888;">10 questions · First to answer wins</p>
                 <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <div class="text-xl font-bold" style="color:#4a4768;">$5</div>
-                        <div class="text-xs" style="color:#4a4768;">entry fee</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm font-semibold" style="color:#4a4768;">$9</div>
-                        <div class="text-xs" style="color:#4a4768;">winner gets</div>
-                    </div>
+                    <div><div class="text-xl font-bold" style="color:#a78bfa;">$5</div><div class="text-xs" style="color:#4a4768;">entry fee</div></div>
+                    <div class="text-right"><div class="text-sm font-semibold" style="color:#f1f0ff;">$9</div><div class="text-xs" style="color:#4a4768;">winner gets</div></div>
                 </div>
-                <button disabled class="w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style="background:#1e1d2e; color:#4a4768;">Coming Soon</button>
+                <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
             </div>
 
             <!-- Typing -->
-            <div class="game-card rounded-2xl p-6" style="opacity:0.5;">
+            <div class="game-card disabled rounded-2xl p-6">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">⌨️</div>
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="font-bold text-lg" style="color:#f1f0ff;">Typing Race</h3>
@@ -152,18 +145,11 @@
                 </div>
                 <p class="text-sm mb-4" style="color:#6b6888;">60 seconds · WPM battle</p>
                 <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <div class="text-xl font-bold" style="color:#4a4768;">$5</div>
-                        <div class="text-xs" style="color:#4a4768;">entry fee</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-sm font-semibold" style="color:#4a4768;">$9</div>
-                        <div class="text-xs" style="color:#4a4768;">winner gets</div>
-                    </div>
+                    <div><div class="text-xl font-bold" style="color:#4a4768;">$5</div><div class="text-xs" style="color:#4a4768;">entry fee</div></div>
+                    <div class="text-right"><div class="text-sm font-semibold" style="color:#4a4768;">$9</div><div class="text-xs" style="color:#4a4768;">winner gets</div></div>
                 </div>
                 <button disabled class="w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style="background:#1e1d2e; color:#4a4768;">Coming Soon</button>
             </div>
-
         </div>
     </div>
 
@@ -209,30 +195,22 @@
         <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
             <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Welcome to DuelIQ</h3>
             <p class="text-sm mb-6" style="color:#6b6888;">Create your account to start competing</p>
-            <input type="text" id="auth-username" placeholder="Choose a username" maxlength="20"
-                class="w-full rounded-xl px-4 py-3 text-base mb-3">
-            <button onclick="createAccount()" class="btn-primary w-full py-3 rounded-xl font-semibold text-base mb-3">
-                Create Account — Get $100 Free
-            </button>
-            <button onclick="closeAuthModal()" class="w-full py-3 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">
-                Cancel
-            </button>
+            <input type="text" id="auth-username" placeholder="Choose a username" maxlength="20" class="w-full rounded-xl px-4 py-3 text-base mb-3">
+            <button onclick="createAccount()" class="btn-primary w-full py-3 rounded-xl font-semibold text-base mb-3">Create Account — Get $100 Free</button>
+            <button onclick="closeAuthModal()" class="w-full py-3 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">Cancel</button>
         </div>
     </div>
 
-    <!-- RPS Game Modal -->
+    <!-- RPS Modal -->
     <div id="rps-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
         <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
-
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h3 class="text-xl font-bold" style="color:#f1f0ff;">Rock Paper Scissors</h3>
                     <p class="text-sm" style="color:#6b6888;">First to 3 wins · $5 entry</p>
                 </div>
-                <button onclick="closeRPSModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl transition" style="color:#6b6888;" onmouseover="this.style.background='#1e1d2e'" onmouseout="this.style.background='transparent'">×</button>
+                <button onclick="closeModal('rps')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl transition" style="color:#6b6888;" onmouseover="this.style.background='#1e1d2e'" onmouseout="this.style.background='transparent'">×</button>
             </div>
-
-            <!-- Score -->
             <div class="flex justify-center gap-12 mb-6">
                 <div class="text-center">
                     <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
@@ -244,29 +222,64 @@
                     <div id="opp-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
                 </div>
             </div>
-
-            <!-- Result Box -->
             <div id="rps-result" class="min-h-[72px] flex items-center justify-center text-base font-medium mb-6 rounded-xl px-4 text-center" style="background:#0d0c18; border:1px solid #1e1d2e;"></div>
-
-            <!-- Move Buttons -->
             <div id="move-buttons" class="flex justify-center gap-4 mb-6">
-                <button onclick="sendMove('rock')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
-                    <span class="text-3xl">🪨</span>
-                    <span class="text-xs font-medium" style="color:#6b6888;">Rock</span>
+                <button onclick="sendRPSMove('rock')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                    <span class="text-3xl">🪨</span><span class="text-xs font-medium" style="color:#6b6888;">Rock</span>
                 </button>
-                <button onclick="sendMove('paper')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
-                    <span class="text-3xl">📄</span>
-                    <span class="text-xs font-medium" style="color:#6b6888;">Paper</span>
+                <button onclick="sendRPSMove('paper')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                    <span class="text-3xl">📄</span><span class="text-xs font-medium" style="color:#6b6888;">Paper</span>
                 </button>
-                <button onclick="sendMove('scissors')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
-                    <span class="text-3xl">✂️</span>
-                    <span class="text-xs font-medium" style="color:#6b6888;">Scissors</span>
+                <button onclick="sendRPSMove('scissors')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                    <span class="text-3xl">✂️</span><span class="text-xs font-medium" style="color:#6b6888;">Scissors</span>
                 </button>
             </div>
+            <button onclick="resetRPS()" class="w-full py-2.5 rounded-xl text-sm font-medium transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">Restart Match</button>
+        </div>
+    </div>
 
-            <button onclick="resetMatch()" class="w-full py-2.5 rounded-xl text-sm font-medium transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">
-                Restart Match
-            </button>
+    <!-- Trivia Modal -->
+    <div id="trivia-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
+        <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-xl font-bold" style="color:#f1f0ff;">Trivia Battle</h3>
+                    <p class="text-sm" style="color:#6b6888;">10 questions · $5 entry</p>
+                </div>
+                <button onclick="closeModal('trivia')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl transition" style="color:#6b6888;" onmouseover="this.style.background='#1e1d2e'" onmouseout="this.style.background='transparent'">×</button>
+            </div>
+
+            <!-- Scores -->
+            <div class="flex justify-center gap-12 mb-6">
+                <div class="text-center">
+                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
+                    <div id="trivia-my-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
+                </div>
+                <div class="flex items-center text-2xl font-light" style="color:#2a2740;">vs</div>
+                <div class="text-center">
+                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">Opponent</div>
+                    <div id="trivia-opp-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
+                </div>
+            </div>
+
+            <!-- Status/Question area -->
+            <div id="trivia-status" class="min-h-[200px] flex flex-col justify-center">
+                <div id="trivia-waiting-msg" class="text-center" style="color:#4a4768;">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...
+                </div>
+                <div id="trivia-question-area" class="hidden">
+                    <div class="flex justify-between items-center mb-3">
+                        <span id="trivia-q-num" class="text-xs font-medium uppercase tracking-wide" style="color:#4a4768;">Question 1 of 10</span>
+                    </div>
+                    <!-- Timer bar -->
+                    <div class="w-full h-1 rounded-full mb-4 overflow-hidden" style="background:#1e1d2e;">
+                        <div id="trivia-timer-bar" class="h-full rounded-full" style="background:#7c3aed; width:100%; transition: width 0.1s linear;"></div>
+                    </div>
+                    <p id="trivia-question" class="text-base font-semibold mb-4 text-center" style="color:#f1f0ff;"></p>
+                    <div id="trivia-options" class="grid grid-cols-2 gap-3"></div>
+                    <div id="trivia-feedback" class="mt-4 text-center text-sm font-medium hidden"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -276,20 +289,29 @@
             <div class="text-4xl mb-4">💸</div>
             <h3 class="text-xl font-bold mb-2" style="color:#f1f0ff;">Insufficient Funds</h3>
             <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter this tournament.</p>
-            <button onclick="closeFundsModal()" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
+            <button onclick="document.getElementById('funds-modal').classList.add('hidden')" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
         </div>
     </div>
 
     <script>
+        const WS_URL = "wss://dueliq-production.up.railway.app";
+
         let currentUser = localStorage.getItem('dueliq_user') || null;
         let wallet = parseFloat(localStorage.getItem('dueliq_wallet') || '100');
         let ws = null;
-        let reconnectAttempts = 0;
-        const MAX_RECONNECT = 8;
+        let currentGame = null;
+        let onlinePlayers = 128;
+
+        // RPS state
         let myScore = 0, oppScore = 0;
         let myMove = null, oppMove = null;
         let waitingForOpp = false;
-        let onlinePlayers = 128;
+
+        // Trivia state
+        let triviaTimerInterval = null;
+        let triviaTimeLeft = 15;
+        let triviaAnswered = false;
+        let triviaCorrectAnswer = null;
 
         function saveWallet() { localStorage.setItem('dueliq_wallet', wallet.toFixed(2)); }
         function updateWalletDisplay() { document.getElementById('wallet-display').textContent = `$${wallet.toFixed(2)}`; }
@@ -309,8 +331,7 @@
                 walletEl.classList.add('flex');
                 updateWalletDisplay();
             } else {
-                document.getElementById('nav-user').innerHTML = `
-                    <button onclick="showAuthModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign Up Free</button>`;
+                document.getElementById('nav-user').innerHTML = `<button onclick="showAuthModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign Up Free</button>`;
                 walletEl.classList.add('hidden');
             }
         }
@@ -338,138 +359,246 @@
             updateNav();
         }
 
-        function updateStatus(status, attempt) {
-            const el = document.getElementById('connection-status');
-            if (status === 'connected') el.innerHTML = `<span class="text-sm font-medium" style="color:#22c55e;"><i class="fa-solid fa-circle text-xs"></i> Connected</span>`;
-            else if (status === 'connecting') el.innerHTML = `<span class="text-sm font-medium" style="color:#f59e0b;"><i class="fa-solid fa-circle text-xs"></i> Reconnecting (${attempt}/${MAX_RECONNECT})</span>`;
-            else el.innerHTML = `<span class="text-sm font-medium" style="color:#ef4444;"><i class="fa-solid fa-circle text-xs"></i> Offline</span>`;
-        }
-
-        function connectWebSocket() {
-            if (ws) ws.close();
-            ws = new WebSocket("wss://dueliq-production.up.railway.app");
-            ws.onopen = () => { updateStatus('connected'); reconnectAttempts = 0; };
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                const result = document.getElementById('rps-result');
-                if (data.type === "waiting") {
-                    result.innerHTML = `<span style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...</span>`;
-                    setButtonsEnabled(false);
-                } else if (data.type === "matched") {
-                    result.innerHTML = `<span style="color:#22c55e;" class="font-semibold"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Make your move.</span>`;
-                    setButtonsEnabled(true);
-                } else if (data.type === "opponent_move") {
-                    oppMove = data.move;
-                    if (myMove) resolveRound();
-                    else waitingForOpp = true;
-                } else if (data.type === "opponent_left") {
-                    result.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-user-slash mr-2"></i>Opponent disconnected.</span>`;
-                    setButtonsEnabled(false);
-                    resetScores();
-                }
-            };
-            ws.onclose = () => { updateStatus('disconnected'); attemptReconnect(); };
-            ws.onerror = () => updateStatus('disconnected');
-        }
-
-        function attemptReconnect() {
-            if (reconnectAttempts >= MAX_RECONNECT) return;
-            reconnectAttempts++;
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1) * Math.random(), 30000);
-            updateStatus('connecting', reconnectAttempts);
-            setTimeout(() => { if (ws.readyState === WebSocket.CLOSED) connectWebSocket(); }, delay);
-        }
-
         function enterGame(game) {
             if (!currentUser) { showAuthModal(); return; }
             if (wallet < 5) { document.getElementById('funds-modal').classList.remove('hidden'); return; }
             wallet -= 5;
             saveWallet();
             updateWalletDisplay();
-            document.getElementById('rps-modal').classList.remove('hidden');
-            resetMatch();
-            connectWebSocket();
+            currentGame = game;
+            if (game === 'rps') {
+                document.getElementById('rps-modal').classList.remove('hidden');
+                resetRPS();
+            } else if (game === 'trivia') {
+                document.getElementById('trivia-modal').classList.remove('hidden');
+                resetTrivia();
+            }
+            connectWebSocket(game);
         }
 
-        function closeRPSModal() {
-            document.getElementById('rps-modal').classList.add('hidden');
+        function closeModal(game) {
+            document.getElementById(`${game}-modal`).classList.add('hidden');
             if (ws) ws.close();
-            updateStatus('');
+            ws = null;
+            currentGame = null;
+            if (triviaTimerInterval) { clearInterval(triviaTimerInterval); triviaTimerInterval = null; }
         }
 
-        function closeFundsModal() { document.getElementById('funds-modal').classList.add('hidden'); }
+        function connectWebSocket(game) {
+            if (ws) ws.close();
+            ws = new WebSocket(WS_URL);
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ game, action: 'join', player: currentUser }));
+            };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (game === 'rps') handleRPSMessage(data);
+                else if (game === 'trivia') handleTriviaMessage(data);
+            };
+            ws.onclose = () => {};
+            ws.onerror = () => {};
+        }
 
-        function sendMove(move) {
+        // ─── RPS ───────────────────────────────────────────
+        function handleRPSMessage(data) {
+            const result = document.getElementById('rps-result');
+            if (data.type === 'waiting') {
+                result.innerHTML = `<span style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...</span>`;
+                setRPSButtons(false);
+            } else if (data.type === 'matched') {
+                result.innerHTML = `<span style="color:#22c55e;" class="font-semibold"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Make your move.</span>`;
+                setRPSButtons(true);
+            } else if (data.type === 'opponent_move') {
+                oppMove = data.move;
+                if (myMove) resolveRPSRound();
+                else waitingForOpp = true;
+            } else if (data.type === 'opponent_left') {
+                result.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-user-slash mr-2"></i>Opponent disconnected.</span>`;
+                setRPSButtons(false);
+            }
+        }
+
+        function sendRPSMove(move) {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             myMove = move;
-            setButtonsEnabled(false);
-            document.getElementById('rps-result').innerHTML = `<span style="color:#4a4768;">You picked ${getEmoji(move)} — waiting for opponent...</span>`;
-            ws.send(JSON.stringify({ player: currentUser, move }));
-            if (waitingForOpp && oppMove) { waitingForOpp = false; resolveRound(); }
+            setRPSButtons(false);
+            document.getElementById('rps-result').innerHTML = `<span style="color:#4a4768;">You picked ${getRPSEmoji(move)} — waiting for opponent...</span>`;
+            ws.send(JSON.stringify({ game: 'rps', move }));
+            if (waitingForOpp && oppMove) { waitingForOpp = false; resolveRPSRound(); }
         }
 
-        function resolveRound() {
-            const result = getResult(myMove, oppMove);
+        function resolveRPSRound() {
+            const result = getRPSResult(myMove, oppMove);
             const resultDiv = document.getElementById('rps-result');
-            let msg = `${getEmoji(myMove)} vs ${getEmoji(oppMove)} — `;
-            if (result === 'win') {
-                myScore++;
-                msg += `<span style="color:#22c55e;" class="font-semibold">You win this round!</span>`;
-            } else if (result === 'lose') {
-                oppScore++;
-                msg += `<span style="color:#ef4444;" class="font-semibold">You lose this round</span>`;
-                resultDiv.classList.add('shake');
-                setTimeout(() => resultDiv.classList.remove('shake'), 400);
-            } else {
-                msg += `<span style="color:#f59e0b;" class="font-semibold">Tie!</span>`;
-            }
+            let msg = `${getRPSEmoji(myMove)} vs ${getRPSEmoji(oppMove)} — `;
+            if (result === 'win') { myScore++; msg += `<span style="color:#22c55e;" class="font-semibold">You win this round!</span>`; }
+            else if (result === 'lose') { oppScore++; msg += `<span style="color:#ef4444;" class="font-semibold">You lose this round</span>`; resultDiv.classList.add('shake'); setTimeout(() => resultDiv.classList.remove('shake'), 400); }
+            else { msg += `<span style="color:#f59e0b;" class="font-semibold">Tie!</span>`; }
             resultDiv.innerHTML = msg;
             document.getElementById('my-score').textContent = myScore;
             document.getElementById('opp-score').textContent = oppScore;
             myMove = null; oppMove = null;
-            if (myScore >= 3 || oppScore >= 3) setTimeout(endMatch, 1000);
-            else setTimeout(() => setButtonsEnabled(true), 1200);
+            if (myScore >= 3 || oppScore >= 3) setTimeout(endRPS, 1000);
+            else setTimeout(() => setRPSButtons(true), 1200);
         }
 
-        function endMatch() {
+        function endRPS() {
             const resultDiv = document.getElementById('rps-result');
             if (myScore > oppScore) {
-                wallet += 9;
-                saveWallet();
-                updateWalletDisplay();
+                wallet += 9; saveWallet(); updateWalletDisplay();
                 resultDiv.innerHTML = `<span style="color:#22c55e;" class="font-bold text-lg">🏆 You won! +$9 added to your wallet.</span>`;
             } else {
                 resultDiv.innerHTML = `<span style="color:#ef4444;" class="font-bold text-lg">😔 You lost this match.</span>`;
             }
-            setButtonsEnabled(false);
+            setRPSButtons(false);
         }
 
-        function getResult(p1, p2) {
+        function getRPSResult(p1, p2) {
             if (p1 === p2) return 'tie';
             if ((p1==='rock'&&p2==='scissors')||(p1==='paper'&&p2==='rock')||(p1==='scissors'&&p2==='paper')) return 'win';
             return 'lose';
         }
-
-        function getEmoji(m) { return m==='rock'?'🪨':m==='paper'?'📄':'✂️'; }
-
-        function setButtonsEnabled(enabled) {
+        function getRPSEmoji(m) { return m==='rock'?'🪨':m==='paper'?'📄':'✂️'; }
+        function setRPSButtons(enabled) {
             document.querySelectorAll('#move-buttons button').forEach(btn => {
                 btn.disabled = !enabled;
                 btn.style.borderColor = enabled ? '#2a2740' : '#1a1828';
             });
         }
-
-        function resetScores() {
-            myScore = 0; oppScore = 0;
+        function resetRPS() {
+            myScore = 0; oppScore = 0; myMove = null; oppMove = null; waitingForOpp = false;
             document.getElementById('my-score').textContent = '0';
             document.getElementById('opp-score').textContent = '0';
+            document.getElementById('rps-result').innerHTML = '';
+            setRPSButtons(false);
         }
 
-        function resetMatch() {
-            resetScores();
-            myMove = null; oppMove = null; waitingForOpp = false;
-            document.getElementById('rps-result').innerHTML = '';
-            setButtonsEnabled(false);
+        // ─── TRIVIA ────────────────────────────────────────
+        function handleTriviaMessage(data) {
+            if (data.type === 'waiting') {
+                showTriviaWaiting();
+            } else if (data.type === 'matched') {
+                document.getElementById('trivia-waiting-msg').innerHTML = `<span style="color:#22c55e;"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Get ready...</span>`;
+            } else if (data.type === 'trivia_question') {
+                showTriviaQuestion(data);
+            } else if (data.type === 'trivia_result') {
+                showTriviaResult(data);
+            } else if (data.type === 'trivia_end') {
+                endTrivia(data);
+            } else if (data.type === 'opponent_left') {
+                document.getElementById('trivia-waiting-msg').innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-user-slash mr-2"></i>Opponent disconnected.</span>`;
+                document.getElementById('trivia-waiting-msg').classList.remove('hidden');
+                document.getElementById('trivia-question-area').classList.add('hidden');
+                if (triviaTimerInterval) clearInterval(triviaTimerInterval);
+            }
+        }
+
+        function showTriviaWaiting() {
+            document.getElementById('trivia-waiting-msg').classList.remove('hidden');
+            document.getElementById('trivia-question-area').classList.add('hidden');
+        }
+
+        function showTriviaQuestion(data) {
+            triviaAnswered = false;
+            triviaCorrectAnswer = null;
+            document.getElementById('trivia-waiting-msg').classList.add('hidden');
+            document.getElementById('trivia-question-area').classList.remove('hidden');
+            document.getElementById('trivia-feedback').classList.add('hidden');
+            document.getElementById('trivia-q-num').textContent = `Question ${data.index + 1} of ${data.total}`;
+            document.getElementById('trivia-question').textContent = data.question;
+            document.getElementById('trivia-my-score').textContent = data.scores?.you ?? 0;
+            document.getElementById('trivia-opp-score').textContent = data.scores?.opp ?? 0;
+
+            // Render options
+            const optDiv = document.getElementById('trivia-options');
+            optDiv.innerHTML = '';
+            data.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'trivia-opt w-full py-3 px-4 rounded-xl text-sm font-medium text-left';
+                btn.style.color = '#f1f0ff';
+                btn.textContent = opt;
+                btn.onclick = () => submitTriviaAnswer(opt);
+                optDiv.appendChild(btn);
+            });
+
+            // Timer
+            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
+            triviaTimeLeft = 15;
+            const bar = document.getElementById('trivia-timer-bar');
+            bar.style.width = '100%';
+            bar.style.background = '#7c3aed';
+            triviaTimerInterval = setInterval(() => {
+                triviaTimeLeft -= 0.1;
+                const pct = (triviaTimeLeft / 15) * 100;
+                bar.style.width = pct + '%';
+                if (pct < 30) bar.style.background = '#ef4444';
+                else if (pct < 60) bar.style.background = '#f59e0b';
+                if (triviaTimeLeft <= 0) {
+                    clearInterval(triviaTimerInterval);
+                    if (!triviaAnswered) submitTriviaAnswer(null);
+                }
+            }, 100);
+        }
+
+        function submitTriviaAnswer(answer) {
+            if (triviaAnswered) return;
+            triviaAnswered = true;
+            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            ws.send(JSON.stringify({ game: 'trivia', action: 'answer', answer }));
+            // Dim all buttons while waiting for result
+            document.querySelectorAll('.trivia-opt').forEach(btn => btn.disabled = true);
+            const fb = document.getElementById('trivia-feedback');
+            fb.classList.remove('hidden');
+            fb.style.color = '#4a4768';
+            fb.textContent = answer ? 'Waiting for result...' : '⏱ Time\'s up!';
+        }
+
+        function showTriviaResult(data) {
+            const opts = document.querySelectorAll('.trivia-opt');
+            opts.forEach(btn => {
+                if (btn.textContent === data.correct_answer) btn.classList.add('reveal');
+                else if (btn.disabled && !btn.classList.contains('reveal')) {
+                    // the one they picked wrong
+                }
+            });
+            const fb = document.getElementById('trivia-feedback');
+            fb.classList.remove('hidden');
+            if (data.correct) {
+                fb.style.color = '#22c55e';
+                fb.textContent = '✓ Correct! +1 point';
+            } else {
+                fb.style.color = '#ef4444';
+                fb.textContent = `✗ Wrong! Answer was: ${data.correct_answer}`;
+            }
+            document.getElementById('trivia-my-score').textContent = data.my_score;
+            document.getElementById('trivia-opp-score').textContent = data.opp_score;
+        }
+
+        function endTrivia(data) {
+            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
+            document.getElementById('trivia-question-area').classList.add('hidden');
+            document.getElementById('trivia-waiting-msg').classList.remove('hidden');
+            if (data.won) {
+                wallet += 9; saveWallet(); updateWalletDisplay();
+                document.getElementById('trivia-waiting-msg').innerHTML = `<div class="text-center"><div class="text-4xl mb-3">🏆</div><div class="text-lg font-bold" style="color:#22c55e;">You won! +$9 added to wallet.</div><div class="text-sm mt-1" style="color:#4a4768;">Final: ${data.my_score} – ${data.opp_score}</div></div>`;
+            } else {
+                document.getElementById('trivia-waiting-msg').innerHTML = `<div class="text-center"><div class="text-4xl mb-3">😔</div><div class="text-lg font-bold" style="color:#ef4444;">You lost this match.</div><div class="text-sm mt-1" style="color:#4a4768;">Final: ${data.my_score} – ${data.opp_score}</div></div>`;
+            }
+            document.getElementById('trivia-my-score').textContent = data.my_score;
+            document.getElementById('trivia-opp-score').textContent = data.opp_score;
+        }
+
+        function resetTrivia() {
+            triviaAnswered = false;
+            triviaCorrectAnswer = null;
+            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
+            document.getElementById('trivia-my-score').textContent = '0';
+            document.getElementById('trivia-opp-score').textContent = '0';
+            document.getElementById('trivia-waiting-msg').innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...`;
+            document.getElementById('trivia-waiting-msg').style.color = '#4a4768';
+            document.getElementById('trivia-waiting-msg').classList.remove('hidden');
+            document.getElementById('trivia-question-area').classList.add('hidden');
         }
 
         function animatePlayers() {
