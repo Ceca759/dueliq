@@ -3,7 +3,6 @@ import websockets
 import json
 from datetime import datetime
 import os
-from websockets.asyncio.server import serve
 
 connected_clients = set()
 waiting_player = None
@@ -52,8 +51,8 @@ async def handler(websocket):
 
 async def main():
     port = int(os.environ.get("PORT", 8765))
-    print(f"WebSocket server starting on port {port}")
-    async with serve(handler, "0.0.0.0", port):
+    print(f"WebSocket starting on port {port}")
+    async with websockets.serve(handler, "0.0.0.0", port):
         print(f"WebSocket running on port {port}")
         await asyncio.Future()
 
