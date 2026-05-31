@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #09090f; color: #f1f0ff; }
         .brand { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -301,7 +301,7 @@
         // ── Supabase ───────────────────────────────────────────
         const SUPABASE_URL = 'https://ubrfipncygmigbgqhwal.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicmZpcG5jeWdtaWdiZ3Fod2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjQ5ODIsImV4cCI6MjA5NTgwMDk4Mn0.jQLo9EhCGdn_gB5-qWSCnrYrvP9sLbs1GHbtBDqz5yA';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const WS_URL = "wss://dueliq-production.up.railway.app";
 
