@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuelIQ • Compete & Win</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #09090f; color: #f1f0ff; }
+        .brand { font-family: 'Plus Jakarta Sans', sans-serif; }
+        @keyframes modalIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
+        .modal-anim { animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+        .shake { animation: shake 0.4s ease; }
+        @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        .pulse-dot { animation: pulse-dot 1.5s infinite; }
+        .game-card { transition: all 0.2s ease; background: #13121f; border: 1px solid #2a2740; }
+        .game-card:hover { transform: translateY(-4px); border-color: #7c3aed; box-shadow: 0 20px 40px rgba(124,58,237,0.15); }
+        .btn-primary { background: #7c3aed; color: white; transition: all 0.2s; }
+        .btn-primary:hover { background: #6d28d9; transform: translateY(-1px); }
+        .move-btn { transition: all 0.15s ease; }
+        .move-btn:hover { transform: scale(1.08); }
+        .move-btn:active { transform: scale(0.96); }
+        .move-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+        .glass { background: #13121f; border: 1px solid #2a2740; }
+        input { background: #1a1828 !important; border: 1px solid #2a2740 !important; color: #f1f0ff !important; }
+        input:focus { border-color: #7c3aed !important; outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
+        input::placeholder { color: #4a4768 !important; }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #09090f; } ::-webkit-scrollbar-thumb { background: #2a2740; border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav style="background:#0d0c18; border-bottom: 1px solid #1e1d2e;" class="sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#7c3aed;">
+                    <i class="fa-solid fa-bolt text-white text-sm"></i>
+                </div>
+                <span class="brand text-xl font-bold" style="color:#f1f0ff;">DuelIQ</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="connection-status" class="text-sm"></div>
+                <div id="nav-wallet" class="hidden items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
+                    <i class="fa-solid fa-wallet text-xs"></i>
+                    <span id="wallet-display">$100.00</span>
+                </div>
+                <div id="nav-user"></div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div style="background:#0d0c18; border-bottom:1px solid #1e1d2e;">
+        <div class="max-w-6xl mx-auto px-6 py-24 flex flex-col items-center text-center">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-6" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
+                <span class="w-2 h-2 rounded-full pulse-dot" style="background:#22c55e;"></span>
+                <span id="live-players">0 players online</span>
+            </div>
+            <h1 class="brand text-5xl md:text-6xl font-extrabold leading-tight mb-4" style="color:#f1f0ff;">
+                Compete on skill.<br>
+                <span style="color:#a78bfa;">Win real money.</span>
+            </h1>
+            <p class="text-xl max-w-xl mb-10" style="color:#6b6888;">Challenge real players in skill-based games. The better player always wins — no luck, no gambling.</p>
+            <div class="flex gap-4">
+                <button onclick="showAuthModal()" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
+                    Start Playing <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+                <button onclick="scrollToGames()" class="px-8 py-3.5 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#a78bfa; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">
+                    View Games
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div style="background:#7c3aed;">
+        <div class="max-w-6xl mx-auto px-6 py-4 grid grid-cols-3 gap-4 text-center">
+            <div>
+                <div class="text-2xl font-bold text-white" id="stat-players">0</div>
+                <div class="text-sm" style="color:#ddd6fe;">Players Online</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white">$2.4K</div>
+                <div class="text-sm" style="color:#ddd6fe;">Paid Out Today</div>
+            </div>
+            <div>
+                <div class="text-2xl font-bold text-white">3</div>
+                <div class="text-sm" style="color:#ddd6fe;">Games Available</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Games Section -->
+    <div id="games-section" class="max-w-6xl mx-auto px-6 py-16">
+        <h2 class="text-2xl font-bold mb-2" style="color:#f1f0ff;">Live Tournaments</h2>
+        <p class="mb-8" style="color:#6b6888;">Pick a game and get matched instantly</p>
+
+        <div class="grid md:grid-cols-3 gap-6">
+
+            <!-- RPS -->
+            <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('rps')">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🪨</div>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-lg" style="color:#f1f0ff;">Rock Paper Scissors</h3>
+                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#14532d; color:#86efac;">Live</span>
+                </div>
+                <p class="text-sm mb-4" style="color:#6b6888;">Best of 5 · Real-time multiplayer</p>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <div class="text-xl font-bold" style="color:#a78bfa;">$5</div>
+                        <div class="text-xs" style="color:#4a4768;">entry fee</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold" style="color:#f1f0ff;">$9</div>
+                        <div class="text-xs" style="color:#4a4768;">winner gets</div>
+                    </div>
+                </div>
+                <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
+            </div>
+
+            <!-- Trivia -->
+            <div class="game-card rounded-2xl p-6" style="opacity:0.5;">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🧠</div>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-lg" style="color:#f1f0ff;">Trivia Battle</h3>
+                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#1e1d2e; color:#6b6888;">Soon</span>
+                </div>
+                <p class="text-sm mb-4" style="color:#6b6888;">10 questions · Fastest wins</p>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <div class="text-xl font-bold" style="color:#4a4768;">$5</div>
+                        <div class="text-xs" style="color:#4a4768;">entry fee</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold" style="color:#4a4768;">$9</div>
+                        <div class="text-xs" style="color:#4a4768;">winner gets</div>
+                    </div>
+                </div>
+                <button disabled class="w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style="background:#1e1d2e; color:#4a4768;">Coming Soon</button>
+            </div>
+
+            <!-- Typing -->
+            <div class="game-card rounded-2xl p-6" style="opacity:0.5;">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">⌨️</div>
+                <div class="flex items-center justify-between mb-1">
+                    <h3 class="font-bold text-lg" style="color:#f1f0ff;">Typing Race</h3>
+                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#1e1d2e; color:#6b6888;">Soon</span>
+                </div>
+                <p class="text-sm mb-4" style="color:#6b6888;">60 seconds · WPM battle</p>
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <div class="text-xl font-bold" style="color:#4a4768;">$5</div>
+                        <div class="text-xs" style="color:#4a4768;">entry fee</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold" style="color:#4a4768;">$9</div>
+                        <div class="text-xs" style="color:#4a4768;">winner gets</div>
+                    </div>
+                </div>
+                <button disabled class="w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style="background:#1e1d2e; color:#4a4768;">Coming Soon</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- How it works -->
+    <div style="background:#0d0c18; border-top:1px solid #1e1d2e;">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <h2 class="text-2xl font-bold text-center mb-12" style="color:#f1f0ff;">How it works</h2>
+            <div class="grid md:grid-cols-3 gap-8 text-center">
+                <div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">1</div>
+                    <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Create your account</h3>
+                    <p class="text-sm" style="color:#6b6888;">Sign up in seconds. Get $100 free credits to start playing.</p>
+                </div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">2</div>
+                    <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Enter a tournament</h3>
+                    <p class="text-sm" style="color:#6b6888;">Pick a game, pay the entry fee, get matched with a real opponent instantly.</p>
+                </div>
+                <div>
+                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">3</div>
+                    <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Win & get paid</h3>
+                    <p class="text-sm" style="color:#6b6888;">Beat your opponent and the winnings hit your wallet automatically.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="border-top:1px solid #1e1d2e; background:#09090f;">
+        <div class="max-w-6xl mx-auto px-6 py-8 flex justify-between items-center text-sm" style="color:#4a4768;">
+            <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded flex items-center justify-center" style="background:#7c3aed;">
+                    <i class="fa-solid fa-bolt text-white text-xs"></i>
+                </div>
+                <span class="font-semibold" style="color:#a78bfa;">DuelIQ</span>
+            </div>
+            <span>Skill-based gaming · Not gambling</span>
+        </div>
+    </footer>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
+        <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+            <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Welcome to DuelIQ</h3>
+            <p class="text-sm mb-6" style="color:#6b6888;">Create your account to start competing</p>
+            <input type="text" id="auth-username" placeholder="Choose a username" maxlength="20"
+                class="w-full rounded-xl px-4 py-3 text-base mb-3">
+            <button onclick="createAccount()" class="btn-primary w-full py-3 rounded-xl font-semibold text-base mb-3">
+                Create Account — Get $100 Free
+            </button>
+            <button onclick="closeAuthModal()" class="w-full py-3 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- RPS Game Modal -->
+    <div id="rps-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
+        <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h3 class="text-xl font-bold" style="color:#f1f0ff;">Rock Paper Scissors</h3>
+                    <p class="text-sm" style="color:#6b6888;">First to 3 wins · $5 entry</p>
+                </div>
+                <button onclick="closeRPSModal()" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl transition" style="color:#6b6888;" onmouseover="this.style.background='#1e1d2e'" onmouseout="this.style.background='transparent'">×</button>
+            </div>
+
+            <!-- Score -->
+            <div class="flex justify-center gap-12 mb-6">
+                <div class="text-center">
+                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
+                    <div id="my-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
+                </div>
+                <div class="flex items-center text-2xl font-light" style="color:#2a2740;">vs</div>
+                <div class="text-center">
+                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">Opponent</div>
+                    <div id="opp-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
+                </div>
+            </div>
+
+            <!-- Result Box -->
+            <div id="rps-result" class="min-h-[72px] flex items-center justify-center text-base font-medium mb-6 rounded-xl px-4 text-center" style="background:#0d0c18; border:1px solid #1e1d2e;"></div>
+
+            <!-- Move Buttons -->
+            <div id="move-buttons" class="flex justify-center gap-4 mb-6">
+                <button onclick="sendMove('rock')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                    <span class="text-3xl">🪨</span>
+                    <span class="text-xs font-medium" style="color:#6b6888;">Rock</span>
+                </button>
+                <button onclick="sendMove('paper')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                    <span class="text-3xl">📄</span>
+                    <span class="text-xs font-medium" style="color:#6b6888;">Paper</span>
+                </button>
+                <button onclick="sendMove('scissors')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                    <span class="text-3xl">✂️</span>
+                    <span class="text-xs font-medium" style="color:#6b6888;">Scissors</span>
+                </button>
+            </div>
+
+            <button onclick="resetMatch()" class="w-full py-2.5 rounded-xl text-sm font-medium transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">
+                Restart Match
+            </button>
+        </div>
+    </div>
+
+    <!-- Insufficient Funds Modal -->
+    <div id="funds-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
+        <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center" style="background:#13121f; border:1px solid #2a2740;">
+            <div class="text-4xl mb-4">💸</div>
+            <h3 class="text-xl font-bold mb-2" style="color:#f1f0ff;">Insufficient Funds</h3>
+            <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter this tournament.</p>
+            <button onclick="closeFundsModal()" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = localStorage.getItem('dueliq_user') || null;
+        let wallet = parseFloat(localStorage.getItem('dueliq_wallet') || '100');
+        let ws = null;
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT = 8;
+        let myScore = 0, oppScore = 0;
+        let myMove = null, oppMove = null;
+        let waitingForOpp = false;
+        let onlinePlayers = 128;
+
+        function saveWallet() { localStorage.setItem('dueliq_wallet', wallet.toFixed(2)); }
+        function updateWalletDisplay() { document.getElementById('wallet-display').textContent = `$${wallet.toFixed(2)}`; }
+
+        function updateNav() {
+            const walletEl = document.getElementById('nav-wallet');
+            if (currentUser) {
+                document.getElementById('nav-user').innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828; border:1px solid #2a2740;">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">${currentUser[0].toUpperCase()}</div>
+                            <span class="text-sm font-medium" style="color:#f1f0ff;">${currentUser}</span>
+                        </div>
+                        <button onclick="logout()" class="text-xs transition" style="color:#4a4768;" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#4a4768'">Logout</button>
+                    </div>`;
+                walletEl.classList.remove('hidden');
+                walletEl.classList.add('flex');
+                updateWalletDisplay();
+            } else {
+                document.getElementById('nav-user').innerHTML = `
+                    <button onclick="showAuthModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign Up Free</button>`;
+                walletEl.classList.add('hidden');
+            }
+        }
+
+        function showAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('auth-username').focus(), 100);
+        }
+        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+        function createAccount() {
+            const name = document.getElementById('auth-username').value.trim();
+            if (!name) { alert("Please enter a username"); return; }
+            currentUser = name;
+            wallet = 100;
+            localStorage.setItem('dueliq_user', currentUser);
+            saveWallet();
+            closeAuthModal();
+            updateNav();
+        }
+
+        function logout() {
+            localStorage.removeItem('dueliq_user');
+            currentUser = null;
+            updateNav();
+        }
+
+        function updateStatus(status, attempt) {
+            const el = document.getElementById('connection-status');
+            if (status === 'connected') el.innerHTML = `<span class="text-sm font-medium" style="color:#22c55e;"><i class="fa-solid fa-circle text-xs"></i> Connected</span>`;
+            else if (status === 'connecting') el.innerHTML = `<span class="text-sm font-medium" style="color:#f59e0b;"><i class="fa-solid fa-circle text-xs"></i> Reconnecting (${attempt}/${MAX_RECONNECT})</span>`;
+            else el.innerHTML = `<span class="text-sm font-medium" style="color:#ef4444;"><i class="fa-solid fa-circle text-xs"></i> Offline</span>`;
+        }
+
+        function connectWebSocket() {
+            if (ws) ws.close();
+            ws = new WebSocket("ws://localhost:8765");
+            ws.onopen = () => { updateStatus('connected'); reconnectAttempts = 0; };
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const result = document.getElementById('rps-result');
+                if (data.type === "waiting") {
+                    result.innerHTML = `<span style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...</span>`;
+                    setButtonsEnabled(false);
+                } else if (data.type === "matched") {
+                    result.innerHTML = `<span style="color:#22c55e;" class="font-semibold"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Make your move.</span>`;
+                    setButtonsEnabled(true);
+                } else if (data.type === "opponent_move") {
+                    oppMove = data.move;
+                    if (myMove) resolveRound();
+                    else waitingForOpp = true;
+                } else if (data.type === "opponent_left") {
+                    result.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-user-slash mr-2"></i>Opponent disconnected.</span>`;
+                    setButtonsEnabled(false);
+                    resetScores();
+                }
+            };
+            ws.onclose = () => { updateStatus('disconnected'); attemptReconnect(); };
+            ws.onerror = () => updateStatus('disconnected');
+        }
+
+        function attemptReconnect() {
+            if (reconnectAttempts >= MAX_RECONNECT) return;
+            reconnectAttempts++;
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts - 1) * Math.random(), 30000);
+            updateStatus('connecting', reconnectAttempts);
+            setTimeout(() => { if (ws.readyState === WebSocket.CLOSED) connectWebSocket(); }, delay);
+        }
+
+        function enterGame(game) {
+            if (!currentUser) { showAuthModal(); return; }
+            if (wallet < 5) { document.getElementById('funds-modal').classList.remove('hidden'); return; }
+            wallet -= 5;
+            saveWallet();
+            updateWalletDisplay();
+            document.getElementById('rps-modal').classList.remove('hidden');
+            resetMatch();
+            connectWebSocket();
+        }
+
+        function closeRPSModal() {
+            document.getElementById('rps-modal').classList.add('hidden');
+            if (ws) ws.close();
+            updateStatus('');
+        }
+
+        function closeFundsModal() { document.getElementById('funds-modal').classList.add('hidden'); }
+
+        function sendMove(move) {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            myMove = move;
+            setButtonsEnabled(false);
+            document.getElementById('rps-result').innerHTML = `<span style="color:#4a4768;">You picked ${getEmoji(move)} — waiting for opponent...</span>`;
+            ws.send(JSON.stringify({ player: currentUser, move }));
+            if (waitingForOpp && oppMove) { waitingForOpp = false; resolveRound(); }
+        }
+
+        function resolveRound() {
+            const result = getResult(myMove, oppMove);
+            const resultDiv = document.getElementById('rps-result');
+            let msg = `${getEmoji(myMove)} vs ${getEmoji(oppMove)} — `;
+            if (result === 'win') {
+                myScore++;
+                msg += `<span style="color:#22c55e;" class="font-semibold">You win this round!</span>`;
+            } else if (result === 'lose') {
+                oppScore++;
+                msg += `<span style="color:#ef4444;" class="font-semibold">You lose this round</span>`;
+                resultDiv.classList.add('shake');
+                setTimeout(() => resultDiv.classList.remove('shake'), 400);
+            } else {
+                msg += `<span style="color:#f59e0b;" class="font-semibold">Tie!</span>`;
+            }
+            resultDiv.innerHTML = msg;
+            document.getElementById('my-score').textContent = myScore;
+            document.getElementById('opp-score').textContent = oppScore;
+            myMove = null; oppMove = null;
+            if (myScore >= 3 || oppScore >= 3) setTimeout(endMatch, 1000);
+            else setTimeout(() => setButtonsEnabled(true), 1200);
+        }
+
+        function endMatch() {
+            const resultDiv = document.getElementById('rps-result');
+            if (myScore > oppScore) {
+                wallet += 9;
+                saveWallet();
+                updateWalletDisplay();
+                resultDiv.innerHTML = `<span style="color:#22c55e;" class="font-bold text-lg">🏆 You won! +$9 added to your wallet.</span>`;
+            } else {
+                resultDiv.innerHTML = `<span style="color:#ef4444;" class="font-bold text-lg">😔 You lost this match.</span>`;
+            }
+            setButtonsEnabled(false);
+        }
+
+        function getResult(p1, p2) {
+            if (p1 === p2) return 'tie';
+            if ((p1==='rock'&&p2==='scissors')||(p1==='paper'&&p2==='rock')||(p1==='scissors'&&p2==='paper')) return 'win';
+            return 'lose';
+        }
+
+        function getEmoji(m) { return m==='rock'?'🪨':m==='paper'?'📄':'✂️'; }
+
+        function setButtonsEnabled(enabled) {
+            document.querySelectorAll('#move-buttons button').forEach(btn => {
+                btn.disabled = !enabled;
+                btn.style.borderColor = enabled ? '#2a2740' : '#1a1828';
+            });
+        }
+
+        function resetScores() {
+            myScore = 0; oppScore = 0;
+            document.getElementById('my-score').textContent = '0';
+            document.getElementById('opp-score').textContent = '0';
+        }
+
+        function resetMatch() {
+            resetScores();
+            myMove = null; oppMove = null; waitingForOpp = false;
+            document.getElementById('rps-result').innerHTML = '';
+            setButtonsEnabled(false);
+        }
+
+        function animatePlayers() {
+            onlinePlayers += Math.floor(Math.random() * 5) - 2;
+            if (onlinePlayers < 80) onlinePlayers = 80;
+            document.getElementById('live-players').textContent = `${onlinePlayers} players online`;
+            document.getElementById('stat-players').textContent = onlinePlayers;
+            setTimeout(animatePlayers, 3000);
+        }
+
+        function scrollToGames() {
+            document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.onload = () => { updateNav(); animatePlayers(); };
+    </script>
+</body>
+</html>
