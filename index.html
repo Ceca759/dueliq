@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background: #09090f; color: #f1f0ff; }
         .brand { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -16,7 +17,6 @@
         .shake { animation: shake 0.4s ease; }
         @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .pulse-dot { animation: pulse-dot 1.5s infinite; }
-        @keyframes timer-shrink { from { width: 100%; } to { width: 0%; } }
         .game-card { transition: all 0.2s ease; background: #13121f; border: 1px solid #2a2740; }
         .game-card:hover { transform: translateY(-4px); border-color: #7c3aed; box-shadow: 0 20px 40px rgba(124,58,237,0.15); }
         .game-card.disabled { opacity: 0.5; pointer-events: none; }
@@ -35,7 +35,6 @@
         input { background: #1a1828 !important; border: 1px solid #2a2740 !important; color: #f1f0ff !important; }
         input:focus { border-color: #7c3aed !important; outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
         input::placeholder { color: #4a4768 !important; }
-        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #09090f; } ::-webkit-scrollbar-thumb { background: #2a2740; border-radius: 3px; }
     </style>
 </head>
 <body>
@@ -52,7 +51,7 @@
             <div class="flex items-center gap-3">
                 <div id="nav-wallet" class="hidden items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
                     <i class="fa-solid fa-wallet text-xs"></i>
-                    <span id="wallet-display">$100.00</span>
+                    <span id="wallet-display">$0.00</span>
                 </div>
                 <div id="nav-user"></div>
             </div>
@@ -75,7 +74,7 @@
                 <button onclick="showAuthModal()" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
                     Start Playing <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
-                <button onclick="scrollToGames()" class="px-8 py-3.5 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#a78bfa; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">
+                <button onclick="scrollToGames()" class="px-8 py-3.5 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#a78bfa; background:transparent;">
                     View Games
                 </button>
             </div>
@@ -104,9 +103,7 @@
     <div id="games-section" class="max-w-6xl mx-auto px-6 py-16">
         <h2 class="text-2xl font-bold mb-2" style="color:#f1f0ff;">Live Tournaments</h2>
         <p class="mb-8" style="color:#6b6888;">Pick a game and get matched instantly</p>
-
         <div class="grid md:grid-cols-3 gap-6">
-            <!-- RPS -->
             <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('rps')">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🪨</div>
                 <div class="flex items-center justify-between mb-1">
@@ -120,8 +117,6 @@
                 </div>
                 <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
             </div>
-
-            <!-- Trivia -->
             <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('trivia')">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🧠</div>
                 <div class="flex items-center justify-between mb-1">
@@ -135,8 +130,6 @@
                 </div>
                 <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
             </div>
-
-            <!-- Typing -->
             <div class="game-card disabled rounded-2xl p-6">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">⌨️</div>
                 <div class="flex items-center justify-between mb-1">
@@ -161,17 +154,17 @@
                 <div>
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">1</div>
                     <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Create your account</h3>
-                    <p class="text-sm" style="color:#6b6888;">Sign up in seconds. Get $100 free credits to start playing.</p>
+                    <p class="text-sm" style="color:#6b6888;">Sign in with Google in one click.</p>
                 </div>
                 <div>
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">2</div>
                     <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Enter a tournament</h3>
-                    <p class="text-sm" style="color:#6b6888;">Pick a game, pay the entry fee, get matched with a real opponent instantly.</p>
+                    <p class="text-sm" style="color:#6b6888;">Pick a game, pay the entry fee, get matched instantly.</p>
                 </div>
                 <div>
                     <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">3</div>
                     <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Win & get paid</h3>
-                    <p class="text-sm" style="color:#6b6888;">Beat your opponent and the winnings hit your wallet automatically.</p>
+                    <p class="text-sm" style="color:#6b6888;">Beat your opponent and winnings hit your wallet automatically.</p>
                 </div>
             </div>
         </div>
@@ -194,10 +187,26 @@
     <div id="auth-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
         <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
             <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Welcome to DuelIQ</h3>
-            <p class="text-sm mb-6" style="color:#6b6888;">Create your account to start competing</p>
-            <input type="text" id="auth-username" placeholder="Choose a username" maxlength="20" class="w-full rounded-xl px-4 py-3 text-base mb-3">
-            <button onclick="createAccount()" class="btn-primary w-full py-3 rounded-xl font-semibold text-base mb-3">Create Account — Get $100 Free</button>
-            <button onclick="closeAuthModal()" class="w-full py-3 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">Cancel</button>
+            <p class="text-sm mb-6" style="color:#6b6888;">Sign in to start competing</p>
+            <button onclick="signInWithGoogle()" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-3 transition" style="background:white; color:#1a1a1a;">
+                <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
+                Continue with Google
+            </button>
+            <button onclick="closeAuthModal()" class="w-full py-3 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Username Modal (shown after first Google login) -->
+    <div id="username-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
+        <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+            <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Choose your username</h3>
+            <p class="text-sm mb-6" style="color:#6b6888;">This is how other players will see you</p>
+            <input type="text" id="username-input" placeholder="e.g. ProPlayer99" maxlength="20" class="w-full rounded-xl px-4 py-3 text-base mb-3">
+            <button onclick="saveUsername()" class="btn-primary w-full py-3 rounded-xl font-semibold text-base">
+                Let's Play!
+            </button>
         </div>
     </div>
 
@@ -209,7 +218,7 @@
                     <h3 class="text-xl font-bold" style="color:#f1f0ff;">Rock Paper Scissors</h3>
                     <p class="text-sm" style="color:#6b6888;">First to 3 wins · $5 entry</p>
                 </div>
-                <button onclick="closeModal('rps')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl transition" style="color:#6b6888;" onmouseover="this.style.background='#1e1d2e'" onmouseout="this.style.background='transparent'">×</button>
+                <button onclick="closeModal('rps')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
             </div>
             <div class="flex justify-center gap-12 mb-6">
                 <div class="text-center">
@@ -234,7 +243,7 @@
                     <span class="text-3xl">✂️</span><span class="text-xs font-medium" style="color:#6b6888;">Scissors</span>
                 </button>
             </div>
-            <button onclick="resetRPS()" class="w-full py-2.5 rounded-xl text-sm font-medium transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;" onmouseover="this.style.background='#1a1828'" onmouseout="this.style.background='transparent'">Restart Match</button>
+            <button onclick="resetRPS()" class="w-full py-2.5 rounded-xl text-sm font-medium transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Restart Match</button>
         </div>
     </div>
 
@@ -246,10 +255,8 @@
                     <h3 class="text-xl font-bold" style="color:#f1f0ff;">Trivia Battle</h3>
                     <p class="text-sm" style="color:#6b6888;">10 questions · $5 entry</p>
                 </div>
-                <button onclick="closeModal('trivia')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl transition" style="color:#6b6888;" onmouseover="this.style.background='#1e1d2e'" onmouseout="this.style.background='transparent'">×</button>
+                <button onclick="closeModal('trivia')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
             </div>
-
-            <!-- Scores -->
             <div class="flex justify-center gap-12 mb-6">
                 <div class="text-center">
                     <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
@@ -261,8 +268,6 @@
                     <div id="trivia-opp-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
                 </div>
             </div>
-
-            <!-- Status/Question area -->
             <div id="trivia-status" class="min-h-[200px] flex flex-col justify-center">
                 <div id="trivia-waiting-msg" class="text-center" style="color:#4a4768;">
                     <i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...
@@ -271,9 +276,8 @@
                     <div class="flex justify-between items-center mb-3">
                         <span id="trivia-q-num" class="text-xs font-medium uppercase tracking-wide" style="color:#4a4768;">Question 1 of 10</span>
                     </div>
-                    <!-- Timer bar -->
                     <div class="w-full h-1 rounded-full mb-4 overflow-hidden" style="background:#1e1d2e;">
-                        <div id="trivia-timer-bar" class="h-full rounded-full" style="background:#7c3aed; width:100%; transition: width 0.1s linear;"></div>
+                        <div id="trivia-timer-bar" class="h-full rounded-full" style="background:#7c3aed; width:100%;"></div>
                     </div>
                     <p id="trivia-question" class="text-base font-semibold mb-4 text-center" style="color:#f1f0ff;"></p>
                     <div id="trivia-options" class="grid grid-cols-2 gap-3"></div>
@@ -288,16 +292,21 @@
         <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center" style="background:#13121f; border:1px solid #2a2740;">
             <div class="text-4xl mb-4">💸</div>
             <h3 class="text-xl font-bold mb-2" style="color:#f1f0ff;">Insufficient Funds</h3>
-            <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter this tournament.</p>
+            <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter. Deposit coming soon!</p>
             <button onclick="document.getElementById('funds-modal').classList.add('hidden')" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
         </div>
     </div>
 
     <script>
+        // ── Supabase ───────────────────────────────────────────
+        const SUPABASE_URL = 'https://ubrfipncygmigbgqhwal.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicmZpcG5jeWdtaWdiZ3Fod2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjQ5ODIsImV4cCI6MjA5NTgwMDk4Mn0.jQLo9EhCGdn_gB5-qWSCnrYrvP9sLbs1GHbtBDqz5yA';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         const WS_URL = "wss://dueliq-production.up.railway.app";
 
-        let currentUser = localStorage.getItem('dueliq_user') || null;
-        let wallet = parseFloat(localStorage.getItem('dueliq_wallet') || '100');
+        let currentUser = null;
+        let userProfile = null;
         let ws = null;
         let currentGame = null;
         let onlinePlayers = 128;
@@ -311,60 +320,120 @@
         let triviaTimerInterval = null;
         let triviaTimeLeft = 15;
         let triviaAnswered = false;
-        let triviaCorrectAnswer = null;
 
-        function saveWallet() { localStorage.setItem('dueliq_wallet', wallet.toFixed(2)); }
-        function updateWalletDisplay() { document.getElementById('wallet-display').textContent = `$${wallet.toFixed(2)}`; }
+        // ── Auth ───────────────────────────────────────────────
+        async function signInWithGoogle() {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.href
+                }
+            });
+            if (error) alert('Login error: ' + error.message);
+        }
 
-        function updateNav() {
-            const walletEl = document.getElementById('nav-wallet');
-            if (currentUser) {
-                document.getElementById('nav-user').innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828; border:1px solid #2a2740;">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">${currentUser[0].toUpperCase()}</div>
-                            <span class="text-sm font-medium" style="color:#f1f0ff;">${currentUser}</span>
-                        </div>
-                        <button onclick="logout()" class="text-xs transition" style="color:#4a4768;" onmouseover="this.style.color='#a78bfa'" onmouseout="this.style.color='#4a4768'">Logout</button>
-                    </div>`;
-                walletEl.classList.remove('hidden');
-                walletEl.classList.add('flex');
-                updateWalletDisplay();
-            } else {
-                document.getElementById('nav-user').innerHTML = `<button onclick="showAuthModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign Up Free</button>`;
-                walletEl.classList.add('hidden');
+        async function handleSession(session) {
+            if (!session) {
+                currentUser = null;
+                userProfile = null;
+                updateNav();
+                return;
             }
+            currentUser = session.user;
+
+            // Check if profile exists
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (!profile) {
+                // New user — ask for username
+                closeAuthModal();
+                document.getElementById('username-modal').classList.remove('hidden');
+            } else {
+                userProfile = profile;
+                closeAuthModal();
+                updateNav();
+            }
+        }
+
+        async function saveUsername() {
+            const username = document.getElementById('username-input').value.trim();
+            if (!username) { alert('Please enter a username'); return; }
+
+            const { error } = await supabase.from('profiles').insert({
+                id: currentUser.id,
+                username: username,
+                wallet: 0
+            });
+
+            if (error) {
+                if (error.code === '23505') alert('Username taken! Try another.');
+                else alert('Error: ' + error.message);
+                return;
+            }
+
+            userProfile = { id: currentUser.id, username, wallet: 0 };
+            document.getElementById('username-modal').classList.add('hidden');
+            updateNav();
+        }
+
+        async function logout() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            userProfile = null;
+            updateNav();
         }
 
         function showAuthModal() {
             document.getElementById('auth-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('auth-username').focus(), 100);
         }
-        function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
-
-        function createAccount() {
-            const name = document.getElementById('auth-username').value.trim();
-            if (!name) { alert("Please enter a username"); return; }
-            currentUser = name;
-            wallet = 100;
-            localStorage.setItem('dueliq_user', currentUser);
-            saveWallet();
-            closeAuthModal();
-            updateNav();
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
         }
 
-        function logout() {
-            localStorage.removeItem('dueliq_user');
-            currentUser = null;
-            updateNav();
+        // ── Nav ────────────────────────────────────────────────
+        function updateNav() {
+            const walletEl = document.getElementById('nav-wallet');
+            if (userProfile) {
+                document.getElementById('nav-user').innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828; border:1px solid #2a2740;">
+                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">${userProfile.username[0].toUpperCase()}</div>
+                            <span class="text-sm font-medium" style="color:#f1f0ff;">${userProfile.username}</span>
+                        </div>
+                        <button onclick="logout()" class="text-xs" style="color:#4a4768;">Logout</button>
+                    </div>`;
+                walletEl.classList.remove('hidden');
+                walletEl.classList.add('flex');
+                document.getElementById('wallet-display').textContent = `$${parseFloat(userProfile.wallet).toFixed(2)}`;
+            } else {
+                document.getElementById('nav-user').innerHTML = `
+                    <button onclick="showAuthModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign In</button>`;
+                walletEl.classList.add('hidden');
+            }
         }
 
-        function enterGame(game) {
-            if (!currentUser) { showAuthModal(); return; }
-            if (wallet < 5) { document.getElementById('funds-modal').classList.remove('hidden'); return; }
-            wallet -= 5;
-            saveWallet();
-            updateWalletDisplay();
+        // ── Game Entry ─────────────────────────────────────────
+        async function enterGame(game) {
+            if (!currentUser || !userProfile) { showAuthModal(); return; }
+            if (userProfile.wallet < 5) {
+                document.getElementById('funds-modal').classList.remove('hidden');
+                return;
+            }
+
+            // Deduct entry fee in Supabase
+            const { error } = await supabase
+                .from('profiles')
+                .update({ wallet: userProfile.wallet - 5 })
+                .eq('id', currentUser.id);
+
+            if (error) { alert('Error deducting fee'); return; }
+            userProfile.wallet -= 5;
+            document.getElementById('wallet-display').textContent = `$${userProfile.wallet.toFixed(2)}`;
+
             currentGame = game;
             if (game === 'rps') {
                 document.getElementById('rps-modal').classList.remove('hidden');
@@ -376,19 +445,27 @@
             connectWebSocket(game);
         }
 
+        async function addWinnings(amount) {
+            userProfile.wallet += amount;
+            await supabase.from('profiles')
+                .update({ wallet: userProfile.wallet })
+                .eq('id', currentUser.id);
+            document.getElementById('wallet-display').textContent = `$${userProfile.wallet.toFixed(2)}`;
+        }
+
         function closeModal(game) {
             document.getElementById(`${game}-modal`).classList.add('hidden');
-            if (ws) ws.close();
-            ws = null;
+            if (ws) { ws.close(); ws = null; }
             currentGame = null;
             if (triviaTimerInterval) { clearInterval(triviaTimerInterval); triviaTimerInterval = null; }
         }
 
+        // ── WebSocket ──────────────────────────────────────────
         function connectWebSocket(game) {
             if (ws) ws.close();
             ws = new WebSocket(WS_URL);
             ws.onopen = () => {
-                ws.send(JSON.stringify({ game, action: 'join', player: currentUser }));
+                ws.send(JSON.stringify({ game, action: 'join', player: userProfile.username }));
             };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
@@ -399,7 +476,7 @@
             ws.onerror = () => {};
         }
 
-        // ─── RPS ───────────────────────────────────────────
+        // ── RPS ────────────────────────────────────────────────
         function handleRPSMessage(data) {
             const result = document.getElementById('rps-result');
             if (data.type === 'waiting') {
@@ -442,10 +519,10 @@
             else setTimeout(() => setRPSButtons(true), 1200);
         }
 
-        function endRPS() {
+        async function endRPS() {
             const resultDiv = document.getElementById('rps-result');
             if (myScore > oppScore) {
-                wallet += 9; saveWallet(); updateWalletDisplay();
+                await addWinnings(9);
                 resultDiv.innerHTML = `<span style="color:#22c55e;" class="font-bold text-lg">🏆 You won! +$9 added to your wallet.</span>`;
             } else {
                 resultDiv.innerHTML = `<span style="color:#ef4444;" class="font-bold text-lg">😔 You lost this match.</span>`;
@@ -460,10 +537,7 @@
         }
         function getRPSEmoji(m) { return m==='rock'?'🪨':m==='paper'?'📄':'✂️'; }
         function setRPSButtons(enabled) {
-            document.querySelectorAll('#move-buttons button').forEach(btn => {
-                btn.disabled = !enabled;
-                btn.style.borderColor = enabled ? '#2a2740' : '#1a1828';
-            });
+            document.querySelectorAll('#move-buttons button').forEach(btn => { btn.disabled = !enabled; });
         }
         function resetRPS() {
             myScore = 0; oppScore = 0; myMove = null; oppMove = null; waitingForOpp = false;
@@ -473,7 +547,7 @@
             setRPSButtons(false);
         }
 
-        // ─── TRIVIA ────────────────────────────────────────
+        // ── Trivia ─────────────────────────────────────────────
         function handleTriviaMessage(data) {
             if (data.type === 'waiting') {
                 showTriviaWaiting();
@@ -500,7 +574,6 @@
 
         function showTriviaQuestion(data) {
             triviaAnswered = false;
-            triviaCorrectAnswer = null;
             document.getElementById('trivia-waiting-msg').classList.add('hidden');
             document.getElementById('trivia-question-area').classList.remove('hidden');
             document.getElementById('trivia-feedback').classList.add('hidden');
@@ -508,8 +581,6 @@
             document.getElementById('trivia-question').textContent = data.question;
             document.getElementById('trivia-my-score').textContent = data.scores?.you ?? 0;
             document.getElementById('trivia-opp-score').textContent = data.scores?.opp ?? 0;
-
-            // Render options
             const optDiv = document.getElementById('trivia-options');
             optDiv.innerHTML = '';
             data.options.forEach(opt => {
@@ -520,8 +591,6 @@
                 btn.onclick = () => submitTriviaAnswer(opt);
                 optDiv.appendChild(btn);
             });
-
-            // Timer
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             triviaTimeLeft = 15;
             const bar = document.getElementById('trivia-timer-bar');
@@ -533,10 +602,7 @@
                 bar.style.width = pct + '%';
                 if (pct < 30) bar.style.background = '#ef4444';
                 else if (pct < 60) bar.style.background = '#f59e0b';
-                if (triviaTimeLeft <= 0) {
-                    clearInterval(triviaTimerInterval);
-                    if (!triviaAnswered) submitTriviaAnswer(null);
-                }
+                if (triviaTimeLeft <= 0) { clearInterval(triviaTimerInterval); if (!triviaAnswered) submitTriviaAnswer(null); }
             }, 100);
         }
 
@@ -546,7 +612,6 @@
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             ws.send(JSON.stringify({ game: 'trivia', action: 'answer', answer }));
-            // Dim all buttons while waiting for result
             document.querySelectorAll('.trivia-opt').forEach(btn => btn.disabled = true);
             const fb = document.getElementById('trivia-feedback');
             fb.classList.remove('hidden');
@@ -555,32 +620,23 @@
         }
 
         function showTriviaResult(data) {
-            const opts = document.querySelectorAll('.trivia-opt');
-            opts.forEach(btn => {
+            document.querySelectorAll('.trivia-opt').forEach(btn => {
                 if (btn.textContent === data.correct_answer) btn.classList.add('reveal');
-                else if (btn.disabled && !btn.classList.contains('reveal')) {
-                    // the one they picked wrong
-                }
             });
             const fb = document.getElementById('trivia-feedback');
             fb.classList.remove('hidden');
-            if (data.correct) {
-                fb.style.color = '#22c55e';
-                fb.textContent = '✓ Correct! +1 point';
-            } else {
-                fb.style.color = '#ef4444';
-                fb.textContent = `✗ Wrong! Answer was: ${data.correct_answer}`;
-            }
+            if (data.correct) { fb.style.color = '#22c55e'; fb.textContent = '✓ Correct! +1 point'; }
+            else { fb.style.color = '#ef4444'; fb.textContent = `✗ Wrong! Answer was: ${data.correct_answer}`; }
             document.getElementById('trivia-my-score').textContent = data.my_score;
             document.getElementById('trivia-opp-score').textContent = data.opp_score;
         }
 
-        function endTrivia(data) {
+        async function endTrivia(data) {
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             document.getElementById('trivia-question-area').classList.add('hidden');
             document.getElementById('trivia-waiting-msg').classList.remove('hidden');
             if (data.won) {
-                wallet += 9; saveWallet(); updateWalletDisplay();
+                await addWinnings(9);
                 document.getElementById('trivia-waiting-msg').innerHTML = `<div class="text-center"><div class="text-4xl mb-3">🏆</div><div class="text-lg font-bold" style="color:#22c55e;">You won! +$9 added to wallet.</div><div class="text-sm mt-1" style="color:#4a4768;">Final: ${data.my_score} – ${data.opp_score}</div></div>`;
             } else {
                 document.getElementById('trivia-waiting-msg').innerHTML = `<div class="text-center"><div class="text-4xl mb-3">😔</div><div class="text-lg font-bold" style="color:#ef4444;">You lost this match.</div><div class="text-sm mt-1" style="color:#4a4768;">Final: ${data.my_score} – ${data.opp_score}</div></div>`;
@@ -591,7 +647,6 @@
 
         function resetTrivia() {
             triviaAnswered = false;
-            triviaCorrectAnswer = null;
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             document.getElementById('trivia-my-score').textContent = '0';
             document.getElementById('trivia-opp-score').textContent = '0';
@@ -601,6 +656,7 @@
             document.getElementById('trivia-question-area').classList.add('hidden');
         }
 
+        // ── Players animation ──────────────────────────────────
         function animatePlayers() {
             onlinePlayers += Math.floor(Math.random() * 5) - 2;
             if (onlinePlayers < 80) onlinePlayers = 80;
@@ -613,7 +669,15 @@
             document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
         }
 
-        window.onload = () => { updateNav(); animatePlayers(); };
+        // ── Init ───────────────────────────────────────────────
+        window.onload = async () => {
+            animatePlayers();
+            const { data: { session } } = await supabase.auth.getSession();
+            await handleSession(session);
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                await handleSession(session);
+            });
+        };
     </script>
 </body>
 </html>
