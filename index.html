@@ -27,9 +27,7 @@
         .move-btn:active { transform: scale(0.96); }
         .move-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
         .trivia-opt { transition: all 0.15s ease; background: #1a1828; border: 1px solid #2a2740; cursor: pointer; }
-        .trivia-opt:hover:not(:disabled) { border-color: #7c3aed; background: #1e1d2e; transform: translateY(-1px); }
-        .trivia-opt.correct { background: #14532d !important; border-color: #22c55e !important; color: #86efac !important; }
-        .trivia-opt.wrong { background: #450a0a !important; border-color: #ef4444 !important; color: #fca5a5 !important; }
+        .trivia-opt:hover:not(:disabled) { border-color: #7c3aed; background: #1e1d2e; }
         .trivia-opt.reveal { background: #14532d !important; border-color: #22c55e !important; color: #86efac !important; }
         .trivia-opt:disabled { cursor: not-allowed; }
         input { background: #1a1828 !important; border: 1px solid #2a2740 !important; color: #f1f0ff !important; }
@@ -39,7 +37,6 @@
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav style="background:#0d0c18; border-bottom: 1px solid #1e1d2e;" class="sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
             <div class="flex items-center gap-2">
@@ -58,7 +55,6 @@
         </div>
     </nav>
 
-    <!-- Hero -->
     <div style="background:#0d0c18; border-bottom:1px solid #1e1d2e;">
         <div class="max-w-6xl mx-auto px-6 py-24 flex flex-col items-center text-center">
             <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-6" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
@@ -69,19 +65,18 @@
                 Compete on skill.<br>
                 <span style="color:#a78bfa;">Win real money.</span>
             </h1>
-            <p class="text-xl max-w-xl mb-10" style="color:#6b6888;">Challenge real players in skill-based games. The better player always wins — no luck, no gambling.</p>
+            <p class="text-xl max-w-xl mb-10" style="color:#6b6888;">Challenge real players in skill-based games. The better player always wins.</p>
             <div class="flex gap-4">
-                <button onclick="showAuthModal()" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
+                <button id="start-btn" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
                     Start Playing <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
-                <button onclick="scrollToGames()" class="px-8 py-3.5 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#a78bfa; background:transparent;">
+                <button id="view-btn" class="px-8 py-3.5 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#a78bfa; background:transparent;">
                     View Games
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Stats Bar -->
     <div style="background:#7c3aed;">
         <div class="max-w-6xl mx-auto px-6 py-4 grid grid-cols-3 gap-4 text-center">
             <div>
@@ -99,12 +94,11 @@
         </div>
     </div>
 
-    <!-- Games Section -->
     <div id="games-section" class="max-w-6xl mx-auto px-6 py-16">
         <h2 class="text-2xl font-bold mb-2" style="color:#f1f0ff;">Live Tournaments</h2>
         <p class="mb-8" style="color:#6b6888;">Pick a game and get matched instantly</p>
         <div class="grid md:grid-cols-3 gap-6">
-            <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('rps')">
+            <div class="game-card rounded-2xl p-6 cursor-pointer" id="rps-card">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🪨</div>
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="font-bold text-lg" style="color:#f1f0ff;">Rock Paper Scissors</h3>
@@ -117,7 +111,7 @@
                 </div>
                 <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
             </div>
-            <div class="game-card rounded-2xl p-6 cursor-pointer" onclick="enterGame('trivia')">
+            <div class="game-card rounded-2xl p-6 cursor-pointer" id="trivia-card">
                 <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🧠</div>
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="font-bold text-lg" style="color:#f1f0ff;">Trivia Battle</h3>
@@ -146,7 +140,6 @@
         </div>
     </div>
 
-    <!-- How it works -->
     <div style="background:#0d0c18; border-top:1px solid #1e1d2e;">
         <div class="max-w-6xl mx-auto px-6 py-16">
             <h2 class="text-2xl font-bold text-center mb-12" style="color:#f1f0ff;">How it works</h2>
@@ -170,7 +163,6 @@
         </div>
     </div>
 
-    <!-- Footer -->
     <footer style="border-top:1px solid #1e1d2e; background:#09090f;">
         <div class="max-w-6xl mx-auto px-6 py-8 flex justify-between items-center text-sm" style="color:#4a4768;">
             <div class="flex items-center gap-2">
@@ -188,25 +180,23 @@
         <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
             <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Welcome to DuelIQ</h3>
             <p class="text-sm mb-6" style="color:#6b6888;">Sign in to start competing</p>
-            <button onclick="signInWithGoogle()" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-3 transition" style="background:white; color:#1a1a1a;">
+            <button id="google-btn" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-3" style="background:white; color:#1a1a1a;">
                 <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
                 Continue with Google
             </button>
-            <button onclick="closeAuthModal()" class="w-full py-3 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">
+            <button id="cancel-auth-btn" class="w-full py-3 rounded-xl font-semibold text-base" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">
                 Cancel
             </button>
         </div>
     </div>
 
-    <!-- Username Modal (shown after first Google login) -->
+    <!-- Username Modal -->
     <div id="username-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
         <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
             <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Choose your username</h3>
             <p class="text-sm mb-6" style="color:#6b6888;">This is how other players will see you</p>
             <input type="text" id="username-input" placeholder="e.g. ProPlayer99" maxlength="20" class="w-full rounded-xl px-4 py-3 text-base mb-3">
-            <button onclick="saveUsername()" class="btn-primary w-full py-3 rounded-xl font-semibold text-base">
-                Let's Play!
-            </button>
+            <button id="save-username-btn" class="btn-primary w-full py-3 rounded-xl font-semibold text-base">Let's Play!</button>
         </div>
     </div>
 
@@ -218,7 +208,7 @@
                     <h3 class="text-xl font-bold" style="color:#f1f0ff;">Rock Paper Scissors</h3>
                     <p class="text-sm" style="color:#6b6888;">First to 3 wins · $5 entry</p>
                 </div>
-                <button onclick="closeModal('rps')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
+                <button id="close-rps-btn" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
             </div>
             <div class="flex justify-center gap-12 mb-6">
                 <div class="text-center">
@@ -233,17 +223,17 @@
             </div>
             <div id="rps-result" class="min-h-[72px] flex items-center justify-center text-base font-medium mb-6 rounded-xl px-4 text-center" style="background:#0d0c18; border:1px solid #1e1d2e;"></div>
             <div id="move-buttons" class="flex justify-center gap-4 mb-6">
-                <button onclick="sendRPSMove('rock')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                <button id="rock-btn" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
                     <span class="text-3xl">🪨</span><span class="text-xs font-medium" style="color:#6b6888;">Rock</span>
                 </button>
-                <button onclick="sendRPSMove('paper')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                <button id="paper-btn" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
                     <span class="text-3xl">📄</span><span class="text-xs font-medium" style="color:#6b6888;">Paper</span>
                 </button>
-                <button onclick="sendRPSMove('scissors')" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
+                <button id="scissors-btn" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
                     <span class="text-3xl">✂️</span><span class="text-xs font-medium" style="color:#6b6888;">Scissors</span>
                 </button>
             </div>
-            <button onclick="resetRPS()" class="w-full py-2.5 rounded-xl text-sm font-medium transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Restart Match</button>
+            <button id="reset-rps-btn" class="w-full py-2.5 rounded-xl text-sm font-medium" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Restart Match</button>
         </div>
     </div>
 
@@ -255,7 +245,7 @@
                     <h3 class="text-xl font-bold" style="color:#f1f0ff;">Trivia Battle</h3>
                     <p class="text-sm" style="color:#6b6888;">10 questions · $5 entry</p>
                 </div>
-                <button onclick="closeModal('trivia')" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
+                <button id="close-trivia-btn" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
             </div>
             <div class="flex justify-center gap-12 mb-6">
                 <div class="text-center">
@@ -287,51 +277,75 @@
         </div>
     </div>
 
-    <!-- Insufficient Funds Modal -->
+    <!-- Funds Modal -->
     <div id="funds-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
         <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center" style="background:#13121f; border:1px solid #2a2740;">
             <div class="text-4xl mb-4">💸</div>
             <h3 class="text-xl font-bold mb-2" style="color:#f1f0ff;">Insufficient Funds</h3>
             <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter. Deposit coming soon!</p>
-            <button onclick="document.getElementById('funds-modal').classList.add('hidden')" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
+            <button id="close-funds-btn" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
         </div>
     </div>
 
     <script>
-        // ── Supabase ───────────────────────────────────────────
         const SUPABASE_URL = 'https://ubrfipncygmigbgqhwal.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicmZpcG5jeWdtaWdiZ3Fod2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjQ5ODIsImV4cCI6MjA5NTgwMDk4Mn0.jQLo9EhCGdn_gB5-qWSCnrYrvP9sLbs1GHbtBDqz5yA';
-        let supabaseClient;
-window.addEventListener('load', () => {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUP
+        const WS_URL = 'wss://dueliq-production.up.railway.app';
 
-        const WS_URL = "wss://dueliq-production.up.railway.app";
-
+        let db = null;
         let currentUser = null;
         let userProfile = null;
         let ws = null;
         let currentGame = null;
         let onlinePlayers = 128;
-
-        // RPS state
         let myScore = 0, oppScore = 0;
         let myMove = null, oppMove = null;
         let waitingForOpp = false;
-
-        // Trivia state
         let triviaTimerInterval = null;
         let triviaTimeLeft = 15;
         let triviaAnswered = false;
 
-        // ── Auth ───────────────────────────────────────────────
+        function initSupabase() {
+            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        function updateNav() {
+            const walletEl = document.getElementById('nav-wallet');
+            if (userProfile) {
+                document.getElementById('nav-user').innerHTML =
+                    '<div class="flex items-center gap-2">' +
+                    '<div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828; border:1px solid #2a2740;">' +
+                    '<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">' + userProfile.username[0].toUpperCase() + '</div>' +
+                    '<span class="text-sm font-medium" style="color:#f1f0ff;">' + userProfile.username + '</span>' +
+                    '</div>' +
+                    '<button id="logout-btn" class="text-xs" style="color:#4a4768;">Logout</button>' +
+                    '</div>';
+                document.getElementById('logout-btn').addEventListener('click', logout);
+                walletEl.classList.remove('hidden');
+                walletEl.classList.add('flex');
+                document.getElementById('wallet-display').textContent = '$' + parseFloat(userProfile.wallet).toFixed(2);
+            } else {
+                document.getElementById('nav-user').innerHTML =
+                    '<button id="signin-btn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign In</button>';
+                document.getElementById('signin-btn').addEventListener('click', showAuthModal);
+                walletEl.classList.add('hidden');
+            }
+        }
+
+        function showAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
         async function signInWithGoogle() {
-            const { error } = await supabase.auth.signInWithOAuth({
+            const result = await db.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: window.location.href
-                }
+                options: { redirectTo: window.location.href }
             });
-            if (error) alert('Login error: ' + error.message);
+            if (result.error) alert('Login error: ' + result.error.message);
         }
 
         async function handleSession(session) {
@@ -342,20 +356,12 @@ window.addEventListener('load', () => {
                 return;
             }
             currentUser = session.user;
-
-            // Check if profile exists
-            const { data: profile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-
-            if (!profile) {
-                // New user — ask for username
+            const result = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+            if (!result.data) {
                 closeAuthModal();
                 document.getElementById('username-modal').classList.remove('hidden');
             } else {
-                userProfile = profile;
+                userProfile = result.data;
                 closeAuthModal();
                 updateNav();
             }
@@ -364,83 +370,39 @@ window.addEventListener('load', () => {
         async function saveUsername() {
             const username = document.getElementById('username-input').value.trim();
             if (!username) { alert('Please enter a username'); return; }
-
-            const { error } = await supabase.from('profiles').insert({
-                id: currentUser.id,
-                username: username,
-                wallet: 0
-            });
-
-            if (error) {
-                if (error.code === '23505') alert('Username taken! Try another.');
-                else alert('Error: ' + error.message);
+            const result = await db.from('profiles').insert({ id: currentUser.id, username: username, wallet: 0 });
+            if (result.error) {
+                if (result.error.code === '23505') alert('Username taken! Try another.');
+                else alert('Error: ' + result.error.message);
                 return;
             }
-
-            userProfile = { id: currentUser.id, username, wallet: 0 };
+            userProfile = { id: currentUser.id, username: username, wallet: 0 };
             document.getElementById('username-modal').classList.add('hidden');
             updateNav();
         }
 
         async function logout() {
-            await supabase.auth.signOut();
+            await db.auth.signOut();
             currentUser = null;
             userProfile = null;
             updateNav();
         }
 
-        function showAuthModal() {
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-        }
-
-        // ── Nav ────────────────────────────────────────────────
-        function updateNav() {
-            const walletEl = document.getElementById('nav-wallet');
-            if (userProfile) {
-                document.getElementById('nav-user').innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828; border:1px solid #2a2740;">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">${userProfile.username[0].toUpperCase()}</div>
-                            <span class="text-sm font-medium" style="color:#f1f0ff;">${userProfile.username}</span>
-                        </div>
-                        <button onclick="logout()" class="text-xs" style="color:#4a4768;">Logout</button>
-                    </div>`;
-                walletEl.classList.remove('hidden');
-                walletEl.classList.add('flex');
-                document.getElementById('wallet-display').textContent = `$${parseFloat(userProfile.wallet).toFixed(2)}`;
-            } else {
-                document.getElementById('nav-user').innerHTML = `
-                    <button onclick="showAuthModal()" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign In</button>`;
-                walletEl.classList.add('hidden');
-            }
-        }
-
-        // ── Game Entry ─────────────────────────────────────────
         async function enterGame(game) {
             if (!currentUser || !userProfile) { showAuthModal(); return; }
             if (userProfile.wallet < 5) {
                 document.getElementById('funds-modal').classList.remove('hidden');
                 return;
             }
-
-            // Deduct entry fee in Supabase
-            const { error } = await supabase
-                .from('profiles')
-                .update({ wallet: userProfile.wallet - 5 })
-                .eq('id', currentUser.id);
-
-            if (error) { alert('Error deducting fee'); return; }
-            userProfile.wallet -= 5;
-            document.getElementById('wallet-display').textContent = `$${userProfile.wallet.toFixed(2)}`;
-
+            const newWallet = userProfile.wallet - 5;
+            await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
+            userProfile.wallet = newWallet;
+            document.getElementById('wallet-display').textContent = '$' + newWallet.toFixed(2);
             currentGame = game;
             if (game === 'rps') {
                 document.getElementById('rps-modal').classList.remove('hidden');
                 resetRPS();
-            } else if (game === 'trivia') {
+            } else {
                 document.getElementById('trivia-modal').classList.remove('hidden');
                 resetTrivia();
             }
@@ -449,50 +411,44 @@ window.addEventListener('load', () => {
 
         async function addWinnings(amount) {
             userProfile.wallet += amount;
-            await supabase.from('profiles')
-                .update({ wallet: userProfile.wallet })
-                .eq('id', currentUser.id);
-            document.getElementById('wallet-display').textContent = `$${userProfile.wallet.toFixed(2)}`;
+            await db.from('profiles').update({ wallet: userProfile.wallet }).eq('id', currentUser.id);
+            document.getElementById('wallet-display').textContent = '$' + userProfile.wallet.toFixed(2);
         }
 
-        function closeModal(game) {
-            document.getElementById(`${game}-modal`).classList.add('hidden');
+        function closeGame(game) {
+            document.getElementById(game + '-modal').classList.add('hidden');
             if (ws) { ws.close(); ws = null; }
             currentGame = null;
             if (triviaTimerInterval) { clearInterval(triviaTimerInterval); triviaTimerInterval = null; }
         }
 
-        // ── WebSocket ──────────────────────────────────────────
         function connectWebSocket(game) {
             if (ws) ws.close();
             ws = new WebSocket(WS_URL);
-            ws.onopen = () => {
-                ws.send(JSON.stringify({ game, action: 'join', player: userProfile.username }));
+            ws.onopen = function() {
+                ws.send(JSON.stringify({ game: game, action: 'join', player: userProfile.username }));
             };
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
+            ws.onmessage = function(event) {
+                var data = JSON.parse(event.data);
                 if (game === 'rps') handleRPSMessage(data);
-                else if (game === 'trivia') handleTriviaMessage(data);
+                else handleTriviaMessage(data);
             };
-            ws.onclose = () => {};
-            ws.onerror = () => {};
         }
 
-        // ── RPS ────────────────────────────────────────────────
         function handleRPSMessage(data) {
-            const result = document.getElementById('rps-result');
+            var result = document.getElementById('rps-result');
             if (data.type === 'waiting') {
-                result.innerHTML = `<span style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...</span>`;
+                result.innerHTML = '<span style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...</span>';
                 setRPSButtons(false);
             } else if (data.type === 'matched') {
-                result.innerHTML = `<span style="color:#22c55e;" class="font-semibold"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Make your move.</span>`;
+                result.innerHTML = '<span style="color:#22c55e;" class="font-semibold"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Make your move.</span>';
                 setRPSButtons(true);
             } else if (data.type === 'opponent_move') {
                 oppMove = data.move;
                 if (myMove) resolveRPSRound();
                 else waitingForOpp = true;
             } else if (data.type === 'opponent_left') {
-                result.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-user-slash mr-2"></i>Opponent disconnected.</span>`;
+                result.innerHTML = '<span style="color:#ef4444;">Opponent disconnected.</span>';
                 setRPSButtons(false);
             }
         }
@@ -501,33 +457,33 @@ window.addEventListener('load', () => {
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
             myMove = move;
             setRPSButtons(false);
-            document.getElementById('rps-result').innerHTML = `<span style="color:#4a4768;">You picked ${getRPSEmoji(move)} — waiting for opponent...</span>`;
-            ws.send(JSON.stringify({ game: 'rps', move }));
+            document.getElementById('rps-result').innerHTML = '<span style="color:#4a4768;">You picked ' + getRPSEmoji(move) + ' waiting for opponent...</span>';
+            ws.send(JSON.stringify({ game: 'rps', move: move }));
             if (waitingForOpp && oppMove) { waitingForOpp = false; resolveRPSRound(); }
         }
 
         function resolveRPSRound() {
-            const result = getRPSResult(myMove, oppMove);
-            const resultDiv = document.getElementById('rps-result');
-            let msg = `${getRPSEmoji(myMove)} vs ${getRPSEmoji(oppMove)} — `;
-            if (result === 'win') { myScore++; msg += `<span style="color:#22c55e;" class="font-semibold">You win this round!</span>`; }
-            else if (result === 'lose') { oppScore++; msg += `<span style="color:#ef4444;" class="font-semibold">You lose this round</span>`; resultDiv.classList.add('shake'); setTimeout(() => resultDiv.classList.remove('shake'), 400); }
-            else { msg += `<span style="color:#f59e0b;" class="font-semibold">Tie!</span>`; }
+            var result = getRPSResult(myMove, oppMove);
+            var resultDiv = document.getElementById('rps-result');
+            var msg = getRPSEmoji(myMove) + ' vs ' + getRPSEmoji(oppMove) + ' — ';
+            if (result === 'win') { myScore++; msg += '<span style="color:#22c55e;" class="font-semibold">You win this round!</span>'; }
+            else if (result === 'lose') { oppScore++; msg += '<span style="color:#ef4444;" class="font-semibold">You lose this round</span>'; resultDiv.classList.add('shake'); setTimeout(function() { resultDiv.classList.remove('shake'); }, 400); }
+            else { msg += '<span style="color:#f59e0b;" class="font-semibold">Tie!</span>'; }
             resultDiv.innerHTML = msg;
             document.getElementById('my-score').textContent = myScore;
             document.getElementById('opp-score').textContent = oppScore;
             myMove = null; oppMove = null;
             if (myScore >= 3 || oppScore >= 3) setTimeout(endRPS, 1000);
-            else setTimeout(() => setRPSButtons(true), 1200);
+            else setTimeout(function() { setRPSButtons(true); }, 1200);
         }
 
-        async function endRPS() {
-            const resultDiv = document.getElementById('rps-result');
+        function endRPS() {
+            var resultDiv = document.getElementById('rps-result');
             if (myScore > oppScore) {
-                await addWinnings(9);
-                resultDiv.innerHTML = `<span style="color:#22c55e;" class="font-bold text-lg">🏆 You won! +$9 added to your wallet.</span>`;
+                addWinnings(9);
+                resultDiv.innerHTML = '<span style="color:#22c55e;" class="font-bold text-lg">You won! +$9 added to your wallet.</span>';
             } else {
-                resultDiv.innerHTML = `<span style="color:#ef4444;" class="font-bold text-lg">😔 You lost this match.</span>`;
+                resultDiv.innerHTML = '<span style="color:#ef4444;" class="font-bold text-lg">You lost this match.</span>';
             }
             setRPSButtons(false);
         }
@@ -539,7 +495,7 @@ window.addEventListener('load', () => {
         }
         function getRPSEmoji(m) { return m==='rock'?'🪨':m==='paper'?'📄':'✂️'; }
         function setRPSButtons(enabled) {
-            document.querySelectorAll('#move-buttons button').forEach(btn => { btn.disabled = !enabled; });
+            document.querySelectorAll('#move-buttons button').forEach(function(btn) { btn.disabled = !enabled; });
         }
         function resetRPS() {
             myScore = 0; oppScore = 0; myMove = null; oppMove = null; waitingForOpp = false;
@@ -549,12 +505,12 @@ window.addEventListener('load', () => {
             setRPSButtons(false);
         }
 
-        // ── Trivia ─────────────────────────────────────────────
         function handleTriviaMessage(data) {
             if (data.type === 'waiting') {
-                showTriviaWaiting();
+                document.getElementById('trivia-waiting-msg').classList.remove('hidden');
+                document.getElementById('trivia-question-area').classList.add('hidden');
             } else if (data.type === 'matched') {
-                document.getElementById('trivia-waiting-msg').innerHTML = `<span style="color:#22c55e;"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Get ready...</span>`;
+                document.getElementById('trivia-waiting-msg').innerHTML = '<span style="color:#22c55e;">Opponent found! Get ready...</span>';
             } else if (data.type === 'trivia_question') {
                 showTriviaQuestion(data);
             } else if (data.type === 'trivia_result') {
@@ -562,16 +518,11 @@ window.addEventListener('load', () => {
             } else if (data.type === 'trivia_end') {
                 endTrivia(data);
             } else if (data.type === 'opponent_left') {
-                document.getElementById('trivia-waiting-msg').innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-user-slash mr-2"></i>Opponent disconnected.</span>`;
+                document.getElementById('trivia-waiting-msg').innerHTML = '<span style="color:#ef4444;">Opponent disconnected.</span>';
                 document.getElementById('trivia-waiting-msg').classList.remove('hidden');
                 document.getElementById('trivia-question-area').classList.add('hidden');
                 if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             }
-        }
-
-        function showTriviaWaiting() {
-            document.getElementById('trivia-waiting-msg').classList.remove('hidden');
-            document.getElementById('trivia-question-area').classList.add('hidden');
         }
 
         function showTriviaQuestion(data) {
@@ -579,28 +530,28 @@ window.addEventListener('load', () => {
             document.getElementById('trivia-waiting-msg').classList.add('hidden');
             document.getElementById('trivia-question-area').classList.remove('hidden');
             document.getElementById('trivia-feedback').classList.add('hidden');
-            document.getElementById('trivia-q-num').textContent = `Question ${data.index + 1} of ${data.total}`;
+            document.getElementById('trivia-q-num').textContent = 'Question ' + (data.index + 1) + ' of ' + data.total;
             document.getElementById('trivia-question').textContent = data.question;
-            document.getElementById('trivia-my-score').textContent = data.scores?.you ?? 0;
-            document.getElementById('trivia-opp-score').textContent = data.scores?.opp ?? 0;
-            const optDiv = document.getElementById('trivia-options');
+            document.getElementById('trivia-my-score').textContent = data.scores ? data.scores.you : 0;
+            document.getElementById('trivia-opp-score').textContent = data.scores ? data.scores.opp : 0;
+            var optDiv = document.getElementById('trivia-options');
             optDiv.innerHTML = '';
-            data.options.forEach(opt => {
-                const btn = document.createElement('button');
+            data.options.forEach(function(opt) {
+                var btn = document.createElement('button');
                 btn.className = 'trivia-opt w-full py-3 px-4 rounded-xl text-sm font-medium text-left';
                 btn.style.color = '#f1f0ff';
                 btn.textContent = opt;
-                btn.onclick = () => submitTriviaAnswer(opt);
+                btn.addEventListener('click', function() { submitTriviaAnswer(opt); });
                 optDiv.appendChild(btn);
             });
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             triviaTimeLeft = 15;
-            const bar = document.getElementById('trivia-timer-bar');
+            var bar = document.getElementById('trivia-timer-bar');
             bar.style.width = '100%';
             bar.style.background = '#7c3aed';
-            triviaTimerInterval = setInterval(() => {
+            triviaTimerInterval = setInterval(function() {
                 triviaTimeLeft -= 0.1;
-                const pct = (triviaTimeLeft / 15) * 100;
+                var pct = (triviaTimeLeft / 15) * 100;
                 bar.style.width = pct + '%';
                 if (pct < 30) bar.style.background = '#ef4444';
                 else if (pct < 60) bar.style.background = '#f59e0b';
@@ -613,35 +564,35 @@ window.addEventListener('load', () => {
             triviaAnswered = true;
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             if (!ws || ws.readyState !== WebSocket.OPEN) return;
-            ws.send(JSON.stringify({ game: 'trivia', action: 'answer', answer }));
-            document.querySelectorAll('.trivia-opt').forEach(btn => btn.disabled = true);
-            const fb = document.getElementById('trivia-feedback');
+            ws.send(JSON.stringify({ game: 'trivia', action: 'answer', answer: answer }));
+            document.querySelectorAll('.trivia-opt').forEach(function(btn) { btn.disabled = true; });
+            var fb = document.getElementById('trivia-feedback');
             fb.classList.remove('hidden');
             fb.style.color = '#4a4768';
-            fb.textContent = answer ? 'Waiting for result...' : '⏱ Time\'s up!';
+            fb.textContent = answer ? 'Waiting for result...' : 'Time\'s up!';
         }
 
         function showTriviaResult(data) {
-            document.querySelectorAll('.trivia-opt').forEach(btn => {
+            document.querySelectorAll('.trivia-opt').forEach(function(btn) {
                 if (btn.textContent === data.correct_answer) btn.classList.add('reveal');
             });
-            const fb = document.getElementById('trivia-feedback');
+            var fb = document.getElementById('trivia-feedback');
             fb.classList.remove('hidden');
-            if (data.correct) { fb.style.color = '#22c55e'; fb.textContent = '✓ Correct! +1 point'; }
-            else { fb.style.color = '#ef4444'; fb.textContent = `✗ Wrong! Answer was: ${data.correct_answer}`; }
+            if (data.correct) { fb.style.color = '#22c55e'; fb.textContent = 'Correct! +1 point'; }
+            else { fb.style.color = '#ef4444'; fb.textContent = 'Wrong! Answer was: ' + data.correct_answer; }
             document.getElementById('trivia-my-score').textContent = data.my_score;
             document.getElementById('trivia-opp-score').textContent = data.opp_score;
         }
 
-        async function endTrivia(data) {
+        function endTrivia(data) {
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             document.getElementById('trivia-question-area').classList.add('hidden');
             document.getElementById('trivia-waiting-msg').classList.remove('hidden');
             if (data.won) {
-                await addWinnings(9);
-                document.getElementById('trivia-waiting-msg').innerHTML = `<div class="text-center"><div class="text-4xl mb-3">🏆</div><div class="text-lg font-bold" style="color:#22c55e;">You won! +$9 added to wallet.</div><div class="text-sm mt-1" style="color:#4a4768;">Final: ${data.my_score} – ${data.opp_score}</div></div>`;
+                addWinnings(9);
+                document.getElementById('trivia-waiting-msg').innerHTML = '<div class="text-center"><div class="text-4xl mb-3">🏆</div><div class="text-lg font-bold" style="color:#22c55e;">You won! +$9 added to wallet.</div></div>';
             } else {
-                document.getElementById('trivia-waiting-msg').innerHTML = `<div class="text-center"><div class="text-4xl mb-3">😔</div><div class="text-lg font-bold" style="color:#ef4444;">You lost this match.</div><div class="text-sm mt-1" style="color:#4a4768;">Final: ${data.my_score} – ${data.opp_score}</div></div>`;
+                document.getElementById('trivia-waiting-msg').innerHTML = '<div class="text-center"><div class="text-4xl mb-3">😔</div><div class="text-lg font-bold" style="color:#ef4444;">You lost this match.</div></div>';
             }
             document.getElementById('trivia-my-score').textContent = data.my_score;
             document.getElementById('trivia-opp-score').textContent = data.opp_score;
@@ -652,35 +603,48 @@ window.addEventListener('load', () => {
             if (triviaTimerInterval) clearInterval(triviaTimerInterval);
             document.getElementById('trivia-my-score').textContent = '0';
             document.getElementById('trivia-opp-score').textContent = '0';
-            document.getElementById('trivia-waiting-msg').innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...`;
+            document.getElementById('trivia-waiting-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...';
             document.getElementById('trivia-waiting-msg').style.color = '#4a4768';
             document.getElementById('trivia-waiting-msg').classList.remove('hidden');
             document.getElementById('trivia-question-area').classList.add('hidden');
         }
 
-        // ── Players animation ──────────────────────────────────
         function animatePlayers() {
             onlinePlayers += Math.floor(Math.random() * 5) - 2;
             if (onlinePlayers < 80) onlinePlayers = 80;
-            document.getElementById('live-players').textContent = `${onlinePlayers} players online`;
+            document.getElementById('live-players').textContent = onlinePlayers + ' players online';
             document.getElementById('stat-players').textContent = onlinePlayers;
             setTimeout(animatePlayers, 3000);
         }
 
-        function scrollToGames() {
-            document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // ── Init ───────────────────────────────────────────────
-        window.addEventListener('load', async () => {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY
+        document.addEventListener('DOMContentLoaded', function() {
+            initSupabase();
             animatePlayers();
-            const { data: { session } } = await supabase.auth.getSession();
-            await handleSession(session);
-            supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                await handleSession(session);
+
+            document.getElementById('start-btn').addEventListener('click', showAuthModal);
+            document.getElementById('view-btn').addEventListener('click', function() {
+                document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
             });
-        };
+            document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
+            document.getElementById('cancel-auth-btn').addEventListener('click', closeAuthModal);
+            document.getElementById('save-username-btn').addEventListener('click', saveUsername);
+            document.getElementById('close-rps-btn').addEventListener('click', function() { closeGame('rps'); });
+            document.getElementById('close-trivia-btn').addEventListener('click', function() { closeGame('trivia'); });
+            document.getElementById('close-funds-btn').addEventListener('click', function() { document.getElementById('funds-modal').classList.add('hidden'); });
+            document.getElementById('rock-btn').addEventListener('click', function() { sendRPSMove('rock'); });
+            document.getElementById('paper-btn').addEventListener('click', function() { sendRPSMove('paper'); });
+            document.getElementById('scissors-btn').addEventListener('click', function() { sendRPSMove('scissors'); });
+            document.getElementById('reset-rps-btn').addEventListener('click', resetRPS);
+            document.getElementById('rps-card').addEventListener('click', function() { enterGame('rps'); });
+            document.getElementById('trivia-card').addEventListener('click', function() { enterGame('trivia'); });
+
+            db.auth.getSession().then(function(result) {
+                handleSession(result.data.session);
+            });
+            db.auth.onAuthStateChange(function(event, session) {
+                handleSession(session);
+            });
+        });
     </script>
 </body>
 </html>
