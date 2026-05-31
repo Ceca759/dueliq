@@ -301,7 +301,9 @@
         // ── Supabase ───────────────────────────────────────────
         const SUPABASE_URL = 'https://ubrfipncygmigbgqhwal.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicmZpcG5jeWdtaWdiZ3Fod2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjQ5ODIsImV4cCI6MjA5NTgwMDk4Mn0.jQLo9EhCGdn_gB5-qWSCnrYrvP9sLbs1GHbtBDqz5yA';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabaseClient;
+window.addEventListener('load', () => {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUP
 
         const WS_URL = "wss://dueliq-production.up.railway.app";
 
@@ -670,7 +672,8 @@
         }
 
         // ── Init ───────────────────────────────────────────────
-        window.onload = async () => {
+        window.addEventListener('load', async () => {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY
             animatePlayers();
             const { data: { session } } = await supabase.auth.getSession();
             await handleSession(session);
