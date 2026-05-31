@@ -2,7 +2,15 @@ import asyncio
 import websockets
 import json
 from datetime import datetime
-from websockets import ConnectionClosed
+from flask import Flask, send_from_directory
+import threading
+import os
+
+flask_app = Flask(__name__)
+
+@flask_app.route("/")
+def index():
+    return send_from_directory(".", "skillforge.html")
 
 connected_clients = set()
 waiting_player = None
@@ -21,14 +29,12 @@ async def handler(websocket):
         waiting_player = None
         matches[websocket] = opponent
         matches[opponent] = websocket
-
         for p in [websocket, opponent]:
             await p.send(json.dumps({"type": "matched"}))
         print(f"[{datetime.now()}] Match created!")
     else:
         waiting_player = websocket
         await websocket.send(json.dumps({"type": "waiting"}))
-        print(f"[{datetime.now()}] Player waiting for opponent...")
 
     try:
         async for message in websocket:
@@ -49,11 +55,20 @@ async def handler(websocket):
                 await opponent.send(json.dumps({"type": "opponent_left"}))
         if waiting_player == websocket:
             waiting_player = None
-        print(f"[{datetime.now()}] Player left | Total: {len(connected_clients)}")
 
 async def main():
-    async with websockets.serve(handler, "localhost", 8765):
-        print("SkillForge server running at ws://localhost:8765")
+    port = int(os.environ.get("PORT", 5000))
+    ws_port = int(os.environ.get("WS_PORT", 8765))
+
+    flask_thread = threading.Thread(
+        target=lambda: flask_app.run(host="0.0.0.0", port=port)
+    )
+    flask_thread.daemon = True
+    flask_thread.start()
+    print(f"Flask running on port {port}")
+
+    async with websockets.serve(handler, "0.0.0.0", ws_port):
+        print(f"WebSocket running on port {ws_port}")
         await asyncio.Future()
 
 asyncio.run(main())
