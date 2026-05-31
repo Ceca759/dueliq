@@ -347,7 +347,7 @@
 
         function connectWebSocket() {
             if (ws) ws.close();
-            ws = new WebSocket("wss://dueliq-production.up.railway.app/ws");
+            ws = new WebSocket("wss://dueliq-production.up.railway.app");
             ws.onopen = () => { updateStatus('connected'); reconnectAttempts = 0; };
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
