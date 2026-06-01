@@ -164,6 +164,33 @@
         </div>
     </div>
 
+    <!-- Leaderboard Section -->
+    <div id="leaderboard-section" style="background:#0d0c18; border-top:1px solid #1e1d2e;">
+        <div class="max-w-6xl mx-auto px-6 py-16">
+            <div class="flex items-center justify-between mb-2">
+                <h2 class="text-2xl font-bold" style="color:#f1f0ff;">Match Results</h2>
+                <div class="flex gap-2">
+                    <button id="lb-rps-btn" class="px-4 py-1.5 rounded-full text-sm font-semibold transition" style="background:#7c3aed; color:white;">RPS</button>
+                    <button id="lb-trivia-btn" class="px-4 py-1.5 rounded-full text-sm font-semibold transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Trivia</button>
+                </div>
+            </div>
+            <p class="mb-8 text-sm" style="color:#6b6888;">Latest results from all matches</p>
+            <div id="leaderboard-table" class="rounded-2xl overflow-hidden" style="border:1px solid #2a2740;">
+                <div class="grid grid-cols-4 px-5 py-3 text-xs font-semibold uppercase tracking-wide" style="background:#13121f; color:#4a4768; border-bottom:1px solid #2a2740;">
+                    <span>Winner</span>
+                    <span>Loser</span>
+                    <span>Game</span>
+                    <span class="text-right">Payout</span>
+                </div>
+                <div id="leaderboard-rows" class="divide-y" style="border-color:#1e1d2e;">
+                    <div class="px-5 py-8 text-center text-sm" style="color:#4a4768;">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading results...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <footer style="border-top:1px solid #1e1d2e; background:#09090f;">
         <div class="max-w-6xl mx-auto px-6 py-8 flex justify-between items-center text-sm" style="color:#4a4768;">
             <div class="flex items-center gap-2">
@@ -540,6 +567,14 @@
             if (data.type === 'waiting') {
                 document.getElementById('trivia-waiting-msg').classList.remove('hidden');
                 document.getElementById('trivia-question-area').classList.add('hidden');
+            } else if (data.type === 'trivia_score_update') {
+                // Opponent answered wrong — update our score display live
+                document.getElementById('trivia-my-score').textContent = data.my_score;
+                document.getElementById('trivia-opp-score').textContent = data.opp_score;
+                // Flash the score to draw attention
+                var myScoreEl = document.getElementById('trivia-my-score');
+                myScoreEl.style.color = '#22c55e';
+                setTimeout(function() { myScoreEl.style.color = '#f1f0ff'; }, 800);
             } else if (data.type === 'matched') {
                 document.getElementById('trivia-waiting-msg').innerHTML = '<span style="color:#22c55e;">Opponent found! Get ready...</span>';
             } else if (data.type === 'trivia_question') {
@@ -648,6 +683,65 @@
             setTimeout(animatePlayers, 3000);
         }
 
+        // ── Leaderboard ──────────────────────────────────────
+        let currentLbGame = 'rps';
+
+        async function loadLeaderboard(game) {
+            currentLbGame = game;
+            const rowsEl = document.getElementById('leaderboard-rows');
+            rowsEl.innerHTML = '<div class="px-5 py-8 text-center text-sm" style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>';
+
+            // Tab styles
+            document.getElementById('lb-rps-btn').style.background = game === 'rps' ? '#7c3aed' : 'transparent';
+            document.getElementById('lb-rps-btn').style.color = game === 'rps' ? 'white' : '#6b6888';
+            document.getElementById('lb-rps-btn').style.border = game === 'rps' ? 'none' : '1px solid #2a2740';
+            document.getElementById('lb-trivia-btn').style.background = game === 'trivia' ? '#7c3aed' : 'transparent';
+            document.getElementById('lb-trivia-btn').style.color = game === 'trivia' ? 'white' : '#6b6888';
+            document.getElementById('lb-trivia-btn').style.border = game === 'trivia' ? 'none' : '1px solid #2a2740';
+
+            const result = await db
+                .from('matches')
+                .select('*, winner:profiles!matches_winner_id_fkey(username), player1:profiles!matches_player1_id_fkey(username), player2:profiles!matches_player2_id_fkey(username)')
+                .eq('game', game)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            if (result.error || !result.data || result.data.length === 0) {
+                rowsEl.innerHTML = '<div class="px-5 py-8 text-center text-sm" style="color:#4a4768;">No matches yet. Be the first to play!</div>';
+                return;
+            }
+
+            rowsEl.innerHTML = result.data.map(function(match) {
+                var winnerName = match.winner ? match.winner.username : 'Unknown';
+                var loserName = match.winner_id === match.player1_id
+                    ? (match.player2 ? match.player2.username : 'Unknown')
+                    : (match.player1 ? match.player1.username : 'Unknown');
+                var date = new Date(match.created_at);
+                var timeAgo = getTimeAgo(date);
+                return '<div class="grid grid-cols-4 px-5 py-4 items-center hover:bg-white/5 transition" style="background:transparent;">' +
+                    '<div class="flex items-center gap-2">' +
+                        '<span class="text-sm" style="color:#fbbf24;">🏆</span>' +
+                        '<span class="text-sm font-semibold" style="color:#f1f0ff;">' + winnerName + '</span>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-2">' +
+                        '<span class="text-sm" style="color:#ef4444;">💀</span>' +
+                        '<span class="text-sm" style="color:#6b6888;">' + loserName + '</span>' +
+                    '</div>' +
+                    '<div class="text-sm" style="color:#4a4768;">' + timeAgo + '</div>' +
+                    '<div class="text-right text-sm font-semibold" style="color:#22c55e;">+$' + parseFloat(match.payout || 9).toFixed(2) + '</div>' +
+                '</div>';
+            }).join('<div style="border-top:1px solid #1e1d2e;"></div>');
+        }
+
+        function getTimeAgo(date) {
+            var seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'just now';
+            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
+            return Math.floor(seconds / 86400) + 'd ago';
+        }
+        // ── End Leaderboard ───────────────────────────────────
+
         document.addEventListener('DOMContentLoaded', function() {
             initSupabase();
             animatePlayers();
@@ -683,8 +777,12 @@
             document.getElementById('rps-card').addEventListener('click', function() { enterGame('rps'); });
             document.getElementById('trivia-card').addEventListener('click', function() { enterGame('trivia'); });
 
+            document.getElementById('lb-rps-btn').addEventListener('click', function() { loadLeaderboard('rps'); });
+            document.getElementById('lb-trivia-btn').addEventListener('click', function() { loadLeaderboard('trivia'); });
+
             db.auth.getSession().then(function(result) {
                 handleSession(result.data.session);
+                loadLeaderboard('rps'); // load after db is ready
             });
             db.auth.onAuthStateChange(function(event, session) {
                 handleSession(session);
