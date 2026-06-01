@@ -763,7 +763,14 @@
             return Math.floor(seconds / 86400) + 'd ago';
         }
         // ── End Leaderboard ───────────────────────────────────
-
+// Password protection
+const isDev = new URLSearchParams(window.location.search).has('dev');
+if (!isDev) {
+    const password = prompt("Enter password to access DuelIQ:");
+    if (password !== "Cecaceca2008") {
+        document.body.innerHTML = "<div style='display:flex;align-items:center;justify-content:center;height:100vh;background:#09090f;'><h1 style='color:#f1f0ff;font-family:sans-serif;'>Access denied.</h1></div>";
+    }
+}
         document.addEventListener('DOMContentLoaded', function() {
             initSupabase();
             animatePlayers();
