@@ -4,6 +4,40 @@ import json
 from datetime import datetime
 import os
 import random
+import urllib.request
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ubrfipncygmigbgqhwal.supabase.co")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+
+async def record_match(player1_id, player2_id, winner_id, game, entry_fee=5, payout=9):
+    if not SUPABASE_KEY:
+        print("[Supabase] No SUPABASE_KEY set, skipping match record")
+        return
+    try:
+        payload = json.dumps({
+            "player1_id": player1_id,
+            "player2_id": player2_id,
+            "winner_id": winner_id,
+            "game": game,
+            "entry_fee": entry_fee,
+            "payout": payout
+        }).encode()
+        req = urllib.request.Request(
+            f"{SUPABASE_URL}/rest/v1/matches",
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_KEY,
+                "Authorization": f"Bearer {SUPABASE_KEY}",
+                "Prefer": "return=minimal"
+            },
+            method="POST"
+        )
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=5))
+        print(f"[Supabase] Match recorded: {game} winner={winner_id}")
+    except Exception as e:
+        print(f"[Supabase] Failed to record match: {e}")
 
 TRIVIA_QUESTIONS = [
     # Geography
@@ -115,6 +149,7 @@ TRIVIA_QUESTIONS = [
 ]
 
 connected_clients = set()
+player_ids = {}  # ws -> supabase user uuid
 
 # RPS matchmaking
 rps_waiting = None
@@ -229,6 +264,13 @@ async def handle_trivia_answer(ws, answer):
                 "my_score": opp_my,
                 "opp_score": opp_opp
             }))
+        # Record match result in Supabase
+        winner_ws = ws if my_score > opp_score_final else opponent
+        loser_ws = opponent if my_score > opp_score_final else ws
+        p1_id = player_ids.get(winner_ws)
+        p2_id = player_ids.get(loser_ws)
+        if p1_id and p2_id:
+            asyncio.ensure_future(record_match(p1_id, p2_id, p1_id, "trivia"))
         trivia_matches.pop(ws, None)
         trivia_matches.pop(opponent, None)
     else:
@@ -266,6 +308,8 @@ async def handler(websocket):
 
             if game == "rps":
                 if data.get("action") == "join":
+                    if data.get("user_id"):
+                        player_ids[websocket] = data["user_id"]
                     if rps_waiting and is_open(rps_waiting) and rps_waiting != websocket:
                         opponent = rps_waiting
                         rps_waiting = None
@@ -283,9 +327,18 @@ async def handler(websocket):
                             "type": "opponent_move",
                             "move": data.get("move"),
                         }))
+                elif data.get("action") == "game_over":
+                    winner_id = data.get("winner_id")
+                    opponent = rps_matches.get(websocket)
+                    p1_id = player_ids.get(websocket)
+                    p2_id = player_ids.get(opponent) if opponent else None
+                    if winner_id and p1_id and p2_id:
+                        await record_match(p1_id, p2_id, winner_id, "rps")
 
             elif game == "trivia":
                 if data.get("action") == "join":
+                    if data.get("user_id"):
+                        player_ids[websocket] = data["user_id"]
                     if trivia_waiting and is_open(trivia_waiting) and trivia_waiting != websocket:
                         opponent = trivia_waiting
                         trivia_waiting = None
@@ -320,6 +373,7 @@ async def handler(websocket):
         if trivia_waiting == websocket:
             trivia_waiting = None
 
+        player_ids.pop(websocket, None)
         print(f"[{datetime.now()}] Player left | Total: {len(connected_clients)}")
 
 async def main():
