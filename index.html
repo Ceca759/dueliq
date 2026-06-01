@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DuelIQ • Compete & Win</title>
+    <title>DuelIQ • Rock Paper Scissors</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
@@ -11,812 +11,928 @@
     <style>
         body { font-family: 'Inter', sans-serif; background: #09090f; color: #f1f0ff; }
         .brand { font-family: 'Plus Jakarta Sans', sans-serif; }
-        @keyframes modalIn { 0% { transform: scale(0.9) translateY(20px); opacity: 0; } 100% { transform: scale(1) translateY(0); opacity: 1; } }
-        .modal-anim { animation: modalIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
-        .shake { animation: shake 0.4s ease; }
+
+        @keyframes modalIn { 0%{transform:scale(0.9) translateY(20px);opacity:0} 100%{transform:scale(1) translateY(0);opacity:1} }
+        .modal-anim { animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
         @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
         .pulse-dot { animation: pulse-dot 1.5s infinite; }
-        .game-card { transition: all 0.2s ease; background: #13121f; border: 1px solid #2a2740; }
-        .game-card:hover { transform: translateY(-4px); border-color: #7c3aed; box-shadow: 0 20px 40px rgba(124,58,237,0.15); }
-        .game-card.disabled { opacity: 0.5; pointer-events: none; }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+        .shake { animation: shake 0.4s ease; }
+
+        @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+        .pop-in { animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+        /* Rock smashes scissors */
+        @keyframes rockSmash { 0%{transform:translateX(0) rotate(0)} 40%{transform:translateX(18px) rotate(-15deg)} 60%{transform:translateX(-4px) rotate(5deg)} 100%{transform:translateX(0) rotate(0)} }
+        @keyframes scissorsCrushed { 0%{transform:scale(1) rotate(0)} 40%{transform:scale(0.7) rotate(20deg)} 100%{transform:scale(1) rotate(0)} }
+
+        /* Scissors cut paper */
+        @keyframes scissorsSlash { 0%{transform:translateY(0) rotate(0)} 40%{transform:translateY(-10px) rotate(-20deg)} 60%{transform:translateY(4px) rotate(5deg)} 100%{transform:translateY(0) rotate(0)} }
+        @keyframes paperCut { 0%{transform:scale(1)} 40%{transform:scale(0.85) skewX(-5deg)} 100%{transform:scale(1) skewX(0)} }
+
+        /* Paper wraps rock */
+        @keyframes paperWrap { 0%{transform:scale(1) rotate(0)} 40%{transform:scale(1.15) rotate(-8deg)} 100%{transform:scale(1) rotate(0)} }
+        @keyframes rockWrapped { 0%{transform:scale(1)} 40%{transform:scale(0.88)} 100%{transform:scale(1)} }
+
+        .anim-rock-smash { animation: rockSmash 0.6s ease; }
+        .anim-scissors-crushed { animation: scissorsCrushed 0.6s ease; }
+        .anim-scissors-slash { animation: scissorsSlash 0.6s ease; }
+        .anim-paper-cut { animation: paperCut 0.6s ease; }
+        .anim-paper-wrap { animation: paperWrap 0.6s ease; }
+        .anim-rock-wrapped { animation: rockWrapped 0.6s ease; }
+
+        @keyframes confetti { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(-60px) rotate(360deg);opacity:0} }
+        .confetti-piece { animation: confetti 0.8s ease forwards; }
+
+        .move-btn {
+            transition: all 0.15s ease;
+            background: #13121f;
+            border: 2px solid #2a2740;
+            cursor: pointer;
+        }
+        .move-btn:hover:not(:disabled) { transform: translateY(-4px) scale(1.05); border-color: #7c3aed; box-shadow: 0 8px 24px rgba(124,58,237,0.25); }
+        .move-btn:active:not(:disabled) { transform: scale(0.95); }
+        .move-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+        .move-btn.selected { border-color: #7c3aed; background: #1a1535; box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+
+        .game-row { transition: all 0.2s ease; border-bottom: 1px solid #1e1d2e; }
+        .game-row:hover { background: rgba(124,58,237,0.05); }
+        .game-row:last-child { border-bottom: none; }
+
         .btn-primary { background: #7c3aed; color: white; transition: all 0.2s; }
         .btn-primary:hover { background: #6d28d9; transform: translateY(-1px); }
-        .move-btn { transition: all 0.15s ease; }
-        .move-btn:hover { transform: scale(1.08); }
-        .move-btn:active { transform: scale(0.96); }
-        .move-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
-        .trivia-opt { transition: all 0.15s ease; background: #1a1828; border: 1px solid #2a2740; cursor: pointer; }
-        .trivia-opt:hover:not(:disabled) { border-color: #7c3aed; background: #1e1d2e; }
-        .trivia-opt.reveal { background: #14532d !important; border-color: #22c55e !important; color: #86efac !important; }
-        .trivia-opt:disabled { cursor: not-allowed; }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .btn-danger { background: #7f1d1d; color: #fca5a5; border: 1px solid #991b1b; transition: all 0.2s; }
+        .btn-danger:hover { background: #991b1b; }
+
         input { background: #1a1828 !important; border: 1px solid #2a2740 !important; color: #f1f0ff !important; }
         input:focus { border-color: #7c3aed !important; outline: none; box-shadow: 0 0 0 3px rgba(124,58,237,0.2) !important; }
         input::placeholder { color: #4a4768 !important; }
+
+        .score-box { background: #0d0c18; border: 1px solid #1e1d2e; border-radius: 12px; }
+        .score-win { color: #22c55e; }
+        .score-lose { color: #ef4444; }
+
+        @keyframes scoreFlash { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+        .score-flash { animation: scoreFlash 0.3s ease; }
+
+        .result-banner { min-height: 64px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; text-align: center; padding: 12px 16px; }
+
+        .lobby-empty { color: #4a4768; text-align: center; padding: 48px 24px; }
+
+        @keyframes slideIn { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+        .slide-in { animation: slideIn 0.25s ease forwards; }
+
+        /* Fee badge colors */
+        .fee-low { background: #14532d; color: #86efac; }
+        .fee-mid { background: #1e3a5f; color: #93c5fd; }
+        .fee-high { background: #3b1f6e; color: #c4b5fd; }
+        .fee-whale { background: #7f1d1d; color: #fca5a5; }
     </style>
 </head>
 <body>
 
-    <nav style="background:#0d0c18; border-bottom: 1px solid #1e1d2e;" class="sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#7c3aed;">
-                    <i class="fa-solid fa-bolt text-white text-sm"></i>
-                </div>
-                <span class="brand text-xl font-bold" style="color:#f1f0ff;">DuelIQ</span>
+<!-- NAV -->
+<nav style="background:#0d0c18; border-bottom:1px solid #1e1d2e;" class="sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background:#7c3aed;">
+                <i class="fa-solid fa-bolt text-white text-sm"></i>
             </div>
-            <div class="flex items-center gap-3">
-                <div id="nav-wallet" class="hidden items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
-                    <i class="fa-solid fa-wallet text-xs"></i>
-                    <span id="wallet-display">$0.00</span>
-                </div>
-                <div id="nav-user"></div>
-            </div>
+            <span class="brand text-xl font-bold">DuelIQ</span>
         </div>
-    </nav>
-
-    <div style="background:#0d0c18; border-bottom:1px solid #1e1d2e;">
-        <div class="max-w-6xl mx-auto px-6 py-24 flex flex-col items-center text-center">
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-6" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
-                <span class="w-2 h-2 rounded-full pulse-dot" style="background:#22c55e;"></span>
-                <span id="live-players">0 players online</span>
+        <div class="flex items-center gap-3">
+            <div id="nav-wallet" class="hidden items-center gap-1 px-3 py-1.5 rounded-full text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
+                <i class="fa-solid fa-wallet text-xs"></i>
+                <span id="wallet-display">$0.00</span>
             </div>
-            <h1 class="brand text-5xl md:text-6xl font-extrabold leading-tight mb-4" style="color:#f1f0ff;">
-                Compete on skill.<br>
-                <span style="color:#a78bfa;">Win real money.</span>
-            </h1>
-            <p class="text-xl max-w-xl mb-10" style="color:#6b6888;">Challenge real players in skill-based games. The better player always wins.</p>
-            <div class="flex gap-4">
-                <!-- FIX 1: start-btn now checks auth state before acting -->
-                <button id="start-btn" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
-                    Start Playing <i class="fa-solid fa-arrow-right ml-2"></i>
+            <div id="nav-user"></div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div style="background:#0d0c18; border-bottom:1px solid #1e1d2e;">
+    <div class="max-w-5xl mx-auto px-6 py-16 flex flex-col items-center text-center">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-6" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;">
+            <span class="w-2 h-2 rounded-full pulse-dot" style="background:#22c55e;"></span>
+            <span id="live-players">0 players online</span>
+        </div>
+        <h1 class="brand text-5xl md:text-6xl font-extrabold leading-tight mb-4">
+            Rock. Paper. Scissors.<br>
+            <span style="color:#a78bfa;">Real money.</span>
+        </h1>
+        <p class="text-xl max-w-lg mb-10" style="color:#6b6888;">Create a game, set your price, challenge anyone. Winner takes the pot.</p>
+        <button id="start-btn" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
+            Start Playing <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+    </div>
+</div>
+
+<!-- STATS BAR -->
+<div style="background:#7c3aed;">
+    <div class="max-w-5xl mx-auto px-6 py-3 grid grid-cols-3 gap-4 text-center">
+        <div>
+            <div class="text-xl font-bold text-white" id="stat-players">0</div>
+            <div class="text-xs" style="color:#ddd6fe;">Players Online</div>
+        </div>
+        <div>
+            <div class="text-xl font-bold text-white" id="stat-games">0</div>
+            <div class="text-xs" style="color:#ddd6fe;">Open Games</div>
+        </div>
+        <div>
+            <div class="text-xl font-bold text-white">15%</div>
+            <div class="text-xs" style="color:#ddd6fe;">House Cut</div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="max-w-5xl mx-auto px-6 py-12">
+    <div class="grid md:grid-cols-3 gap-8">
+
+        <!-- LEFT: Lobby -->
+        <div class="md:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-xl font-bold">Open Games</h2>
+                    <p class="text-sm mt-0.5" style="color:#6b6888;">Pick a game and jump in</p>
+                </div>
+                <button id="create-game-btn" class="btn-primary px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> Create Game
                 </button>
-                <button id="view-btn" class="px-8 py-3.5 rounded-xl font-semibold text-base transition" style="border:1px solid #2a2740; color:#a78bfa; background:transparent;">
-                    View Games
+            </div>
+
+            <div id="lobby-board" class="rounded-2xl overflow-hidden" style="border:1px solid #2a2740; background:#0d0c18;">
+                <div class="grid grid-cols-4 px-5 py-3 text-xs font-semibold uppercase tracking-wide" style="background:#13121f; color:#4a4768; border-bottom:1px solid #1e1d2e;">
+                    <span>Player</span>
+                    <span>Entry Fee</span>
+                    <span>Pot</span>
+                    <span class="text-right">Action</span>
+                </div>
+                <div id="lobby-rows">
+                    <div class="lobby-empty">
+                        <div class="text-3xl mb-3">🎮</div>
+                        <div class="font-medium mb-1" style="color:#6b6888;">No open games</div>
+                        <div class="text-sm">Be the first to create one!</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- My open game (shown when you've created one) -->
+            <div id="my-game-banner" class="hidden mt-4 p-4 rounded-xl flex items-center justify-between" style="background:#1a1535; border:1px solid #7c3aed;">
+                <div>
+                    <div class="text-sm font-semibold" style="color:#a78bfa;">Your game is open</div>
+                    <div class="text-xs mt-0.5" style="color:#6b6888;">Entry fee: <span id="my-game-fee" class="font-semibold" style="color:#f1f0ff;">$0</span> · Waiting for opponent...</div>
+                </div>
+                <button id="cancel-game-btn" class="btn-danger px-3 py-1.5 rounded-lg text-xs font-semibold">
+                    Cancel & Refund
                 </button>
             </div>
         </div>
-    </div>
 
-    <div style="background:#7c3aed;">
-        <div class="max-w-6xl mx-auto px-6 py-4 grid grid-cols-3 gap-4 text-center">
-            <div>
-                <div class="text-2xl font-bold text-white" id="stat-players">0</div>
-                <div class="text-sm" style="color:#ddd6fe;">Players Online</div>
+        <!-- RIGHT: How it works + leaderboard -->
+        <div>
+            <div class="rounded-2xl p-5 mb-6" style="background:#0d0c18; border:1px solid #2a2740;">
+                <h3 class="font-bold mb-4" style="color:#f1f0ff;">How it works</h3>
+                <div class="space-y-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style="background:#7c3aed; color:white;">1</div>
+                        <p class="text-sm" style="color:#6b6888;">Create a game and set your entry fee (min $1)</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style="background:#7c3aed; color:white;">2</div>
+                        <p class="text-sm" style="color:#6b6888;">Opponent joins and matches your fee</p>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5" style="background:#7c3aed; color:white;">3</div>
+                        <p class="text-sm" style="color:#6b6888;">Play best of 3 — winner gets 85% of the pot</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4" style="border-top:1px solid #1e1d2e;">
+                    <div class="text-xs" style="color:#4a4768;">Example: $10 game → pot is $20 → winner gets <span style="color:#22c55e; font-weight:600;">$17</span></div>
+                </div>
             </div>
-            <div>
-                <div class="text-2xl font-bold text-white">$2.4K</div>
-                <div class="text-sm" style="color:#ddd6fe;">Paid Out Today</div>
-            </div>
-            <div>
-                <div class="text-2xl font-bold text-white">3</div>
-                <div class="text-sm" style="color:#ddd6fe;">Games Available</div>
-            </div>
-        </div>
-    </div>
 
-    <div id="games-section" class="max-w-6xl mx-auto px-6 py-16">
-        <h2 class="text-2xl font-bold mb-2" style="color:#f1f0ff;">Live Tournaments</h2>
-        <p class="mb-8" style="color:#6b6888;">Pick a game and get matched instantly</p>
-        <div class="grid md:grid-cols-3 gap-6">
-            <div class="game-card rounded-2xl p-6 cursor-pointer" id="rps-card">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🪨</div>
-                <div class="flex items-center justify-between mb-1">
-                    <h3 class="font-bold text-lg" style="color:#f1f0ff;">Rock Paper Scissors</h3>
-                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#14532d; color:#86efac;">Live</span>
-                </div>
-                <p class="text-sm mb-4" style="color:#6b6888;">Best of 5 · Real-time multiplayer</p>
-                <div class="flex items-center justify-between mb-4">
-                    <div><div class="text-xl font-bold" style="color:#a78bfa;">$5</div><div class="text-xs" style="color:#4a4768;">entry fee</div></div>
-                    <div class="text-right"><div class="text-sm font-semibold" style="color:#f1f0ff;">$9</div><div class="text-xs" style="color:#4a4768;">winner gets</div></div>
-                </div>
-                <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
-            </div>
-            <div class="game-card rounded-2xl p-6 cursor-pointer" id="trivia-card">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">🧠</div>
-                <div class="flex items-center justify-between mb-1">
-                    <h3 class="font-bold text-lg" style="color:#f1f0ff;">Trivia Battle</h3>
-                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#14532d; color:#86efac;">Live</span>
-                </div>
-                <p class="text-sm mb-4" style="color:#6b6888;">10 questions · First to answer wins</p>
-                <div class="flex items-center justify-between mb-4">
-                    <div><div class="text-xl font-bold" style="color:#a78bfa;">$5</div><div class="text-xs" style="color:#4a4768;">entry fee</div></div>
-                    <div class="text-right"><div class="text-sm font-semibold" style="color:#f1f0ff;">$9</div><div class="text-xs" style="color:#4a4768;">winner gets</div></div>
-                </div>
-                <button class="btn-primary w-full py-2.5 rounded-xl font-semibold text-sm">Play Now</button>
-            </div>
-            <div class="game-card disabled rounded-2xl p-6">
-                <div class="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4" style="background:#1e1d2e;">⌨️</div>
-                <div class="flex items-center justify-between mb-1">
-                    <h3 class="font-bold text-lg" style="color:#f1f0ff;">Typing Race</h3>
-                    <span class="text-xs px-2 py-1 rounded-full font-medium" style="background:#1e1d2e; color:#6b6888;">Soon</span>
-                </div>
-                <p class="text-sm mb-4" style="color:#6b6888;">60 seconds · WPM battle</p>
-                <div class="flex items-center justify-between mb-4">
-                    <div><div class="text-xl font-bold" style="color:#4a4768;">$5</div><div class="text-xs" style="color:#4a4768;">entry fee</div></div>
-                    <div class="text-right"><div class="text-sm font-semibold" style="color:#4a4768;">$9</div><div class="text-xs" style="color:#4a4768;">winner gets</div></div>
-                </div>
-                <button disabled class="w-full py-2.5 rounded-xl font-semibold text-sm cursor-not-allowed" style="background:#1e1d2e; color:#4a4768;">Coming Soon</button>
-            </div>
-        </div>
-    </div>
-
-    <div style="background:#0d0c18; border-top:1px solid #1e1d2e;">
-        <div class="max-w-6xl mx-auto px-6 py-16">
-            <h2 class="text-2xl font-bold text-center mb-12" style="color:#f1f0ff;">How it works</h2>
-            <div class="grid md:grid-cols-3 gap-8 text-center">
-                <div>
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">1</div>
-                    <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Create your account</h3>
-                    <p class="text-sm" style="color:#6b6888;">Sign in with Google in one click.</p>
-                </div>
-                <div>
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">2</div>
-                    <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Enter a tournament</h3>
-                    <p class="text-sm" style="color:#6b6888;">Pick a game, pay the entry fee, get matched instantly.</p>
-                </div>
-                <div>
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold mx-auto mb-4" style="background:#7c3aed; color:white;">3</div>
-                    <h3 class="font-semibold mb-2" style="color:#f1f0ff;">Win & get paid</h3>
-                    <p class="text-sm" style="color:#6b6888;">Beat your opponent and winnings hit your wallet automatically.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Leaderboard Section -->
-    <div id="leaderboard-section" style="background:#0d0c18; border-top:1px solid #1e1d2e;">
-        <div class="max-w-6xl mx-auto px-6 py-16">
-            <div class="flex items-center justify-between mb-2">
-                <h2 class="text-2xl font-bold" style="color:#f1f0ff;">Match Results</h2>
-                <div class="flex gap-2">
-                    <button id="lb-rps-btn" class="px-4 py-1.5 rounded-full text-sm font-semibold transition" style="background:#7c3aed; color:white;">RPS</button>
-                    <button id="lb-trivia-btn" class="px-4 py-1.5 rounded-full text-sm font-semibold transition" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Trivia</button>
-                </div>
-            </div>
-            <p class="mb-8 text-sm" style="color:#6b6888;">Latest results from all matches</p>
-            <div id="leaderboard-table" class="rounded-2xl overflow-hidden" style="border:1px solid #2a2740;">
-                <div class="grid grid-cols-4 px-5 py-3 text-xs font-semibold uppercase tracking-wide" style="background:#13121f; color:#4a4768; border-bottom:1px solid #2a2740;">
-                    <span>Winner</span>
-                    <span>Loser</span>
-                    <span>Game</span>
-                    <span class="text-right">Payout</span>
-                </div>
-                <div id="leaderboard-rows" class="divide-y" style="border-color:#1e1d2e;">
-                    <div class="px-5 py-8 text-center text-sm" style="color:#4a4768;">
-                        <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading results...
+            <!-- Coming Soon games -->
+            <div class="rounded-2xl p-5" style="background:#0d0c18; border:1px solid #2a2740;">
+                <h3 class="font-bold mb-3" style="color:#f1f0ff;">More Games</h3>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between py-2 px-3 rounded-lg" style="background:#13121f;">
+                        <div class="flex items-center gap-2">
+                            <span>🧠</span>
+                            <span class="text-sm font-medium" style="color:#6b6888;">Trivia Battle</span>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1d2e; color:#4a4768;">Soon</span>
+                    </div>
+                    <div class="flex items-center justify-between py-2 px-3 rounded-lg" style="background:#13121f;">
+                        <div class="flex items-center gap-2">
+                            <span>⌨️</span>
+                            <span class="text-sm font-medium" style="color:#6b6888;">Typing Race</span>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1d2e; color:#4a4768;">Soon</span>
+                    </div>
+                    <div class="flex items-center justify-between py-2 px-3 rounded-lg" style="background:#13121f;">
+                        <div class="flex items-center gap-2">
+                            <span>🎯</span>
+                            <span class="text-sm font-medium" style="color:#6b6888;">Reaction Time</span>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1d2e; color:#4a4768;">Soon</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <footer style="border-top:1px solid #1e1d2e; background:#09090f;">
-        <div class="max-w-6xl mx-auto px-6 py-8 flex justify-between items-center text-sm" style="color:#4a4768;">
-            <div class="flex items-center gap-2">
-                <div class="w-5 h-5 rounded flex items-center justify-center" style="background:#7c3aed;">
-                    <i class="fa-solid fa-bolt text-white text-xs"></i>
-                </div>
-                <span class="font-semibold" style="color:#a78bfa;">DuelIQ</span>
+    <!-- LEADERBOARD -->
+    <div class="mt-12">
+        <h2 class="text-xl font-bold mb-1">Recent Matches</h2>
+        <p class="text-sm mb-6" style="color:#6b6888;">Latest results</p>
+        <div id="leaderboard-table" class="rounded-2xl overflow-hidden" style="border:1px solid #2a2740;">
+            <div class="grid grid-cols-4 px-5 py-3 text-xs font-semibold uppercase tracking-wide" style="background:#13121f; color:#4a4768; border-bottom:1px solid #2a2740;">
+                <span>Winner</span><span>Loser</span><span>When</span><span class="text-right">Payout</span>
             </div>
-            <span>Skill-based gaming · Not gambling</span>
+            <div id="leaderboard-rows">
+                <div class="px-5 py-8 text-center text-sm" style="color:#4a4768;">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...
+                </div>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
-        <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
-            <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Welcome to DuelIQ</h3>
-            <p class="text-sm mb-6" style="color:#6b6888;">Sign in to start competing</p>
-            <button id="google-btn" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-3" style="background:white; color:#1a1a1a;">
-                <img src="https://www.google.com/favicon.ico" class="w-5 h-5">
-                Continue with Google
+<footer style="border-top:1px solid #1e1d2e; background:#09090f; margin-top:48px;">
+    <div class="max-w-5xl mx-auto px-6 py-6 flex justify-between items-center text-sm" style="color:#4a4768;">
+        <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded flex items-center justify-center" style="background:#7c3aed;">
+                <i class="fa-solid fa-bolt text-white text-xs"></i>
+            </div>
+            <span class="font-semibold" style="color:#a78bfa;">DuelIQ</span>
+        </div>
+        <span>Skill-based gaming · Not gambling</span>
+    </div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════ -->
+
+<!-- Auth Modal -->
+<div id="auth-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.75);">
+    <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+        <h3 class="text-2xl font-bold mb-1">Welcome to DuelIQ</h3>
+        <p class="text-sm mb-6" style="color:#6b6888;">Sign in to start competing</p>
+        <button id="google-btn" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-3" style="background:white; color:#1a1a1a;">
+            <img src="https://www.google.com/favicon.ico" class="w-5 h-5"> Continue with Google
+        </button>
+        <button id="cancel-auth-btn" class="w-full py-3 rounded-xl font-semibold text-base" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Cancel</button>
+    </div>
+</div>
+
+<!-- Username Modal -->
+<div id="username-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.75);">
+    <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+        <h3 class="text-2xl font-bold mb-1">Choose your username</h3>
+        <p class="text-sm mb-6" style="color:#6b6888;">This is how other players will see you</p>
+        <input type="text" id="username-input" placeholder="e.g. ProPlayer99" maxlength="20" class="w-full rounded-xl px-4 py-3 text-base mb-3">
+        <button id="save-username-btn" class="btn-primary w-full py-3 rounded-xl font-semibold text-base">Let's Play!</button>
+    </div>
+</div>
+
+<!-- Create Game Modal -->
+<div id="create-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.75);">
+    <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+        <h3 class="text-xl font-bold mb-1">Create a Game</h3>
+        <p class="text-sm mb-6" style="color:#6b6888;">Set your entry fee. Opponent matches it.</p>
+        <label class="text-sm font-medium mb-2 block" style="color:#a78bfa;">Entry Fee (min $1)</label>
+        <div class="relative mb-4">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold" style="color:#6b6888;">$</span>
+            <input type="number" id="fee-input" min="1" step="1" value="5" class="w-full rounded-xl pl-8 pr-4 py-3 text-base font-bold">
+        </div>
+        <div class="flex gap-2 mb-6">
+            <button class="fee-preset flex-1 py-2 rounded-lg text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;" data-fee="1">$1</button>
+            <button class="fee-preset flex-1 py-2 rounded-lg text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;" data-fee="5">$5</button>
+            <button class="fee-preset flex-1 py-2 rounded-lg text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;" data-fee="10">$10</button>
+            <button class="fee-preset flex-1 py-2 rounded-lg text-sm font-semibold" style="background:#1a1828; border:1px solid #2a2740; color:#a78bfa;" data-fee="25">$25</button>
+        </div>
+        <div class="mb-6 p-3 rounded-xl text-sm" style="background:#0d0c18; border:1px solid #1e1d2e; color:#6b6888;">
+            Pot: <span id="pot-preview" class="font-bold" style="color:#f1f0ff;">$10</span> · You win: <span id="win-preview" class="font-bold" style="color:#22c55e;">$8.50</span>
+        </div>
+        <button id="confirm-create-btn" class="btn-primary w-full py-3 rounded-xl font-semibold text-base mb-3">Create Game</button>
+        <button id="cancel-create-btn" class="w-full py-2.5 rounded-xl text-sm font-medium" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Cancel</button>
+    </div>
+</div>
+
+<!-- Insufficient Funds Modal -->
+<div id="funds-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.75);">
+    <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center" style="background:#13121f; border:1px solid #2a2740;">
+        <div class="text-4xl mb-4">💸</div>
+        <h3 class="text-xl font-bold mb-2">Not enough funds</h3>
+        <p class="text-sm mb-2" style="color:#6b6888;">You need at least <span id="funds-needed" class="font-bold" style="color:#f1f0ff;">$1</span> to create this game.</p>
+        <p class="text-sm mb-6" style="color:#6b6888;">Your balance: <span id="funds-balance" class="font-bold" style="color:#a78bfa;">$0</span></p>
+        <button id="test-credits-btn" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-2" style="background:#14532d; border:1px solid #22c55e; color:#86efac;">
+            <i class="fa-solid fa-flask text-sm"></i> Get $20 Free Test Credits
+        </button>
+        <button id="close-funds-btn" class="w-full py-2.5 rounded-xl text-sm font-medium" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Cancel</button>
+    </div>
+</div>
+
+<!-- RPS Game Modal -->
+<div id="rps-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.85);">
+    <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h3 class="text-xl font-bold">Rock Paper Scissors</h3>
+                <p id="rps-subtitle" class="text-sm mt-0.5" style="color:#6b6888;">Best of 3</p>
+            </div>
+            <div class="text-right">
+                <div class="text-xs" style="color:#4a4768;">pot</div>
+                <div id="rps-pot" class="font-bold" style="color:#22c55e;">$0</div>
+            </div>
+        </div>
+
+        <!-- Scores -->
+        <div class="flex justify-center gap-6 mb-6">
+            <div class="score-box px-8 py-4 text-center flex-1">
+                <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;" id="my-name-label">You</div>
+                <div id="my-score" class="text-5xl font-bold">0</div>
+            </div>
+            <div class="flex items-center text-2xl font-light" style="color:#2a2740;">vs</div>
+            <div class="score-box px-8 py-4 text-center flex-1">
+                <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;" id="opp-name-label">Opponent</div>
+                <div id="opp-score" class="text-5xl font-bold">0</div>
+            </div>
+        </div>
+
+        <!-- Result/Status area -->
+        <div id="rps-result" class="result-banner mb-6" style="background:#0d0c18; border:1px solid #1e1d2e; color:#4a4768;">
+            Waiting for opponent to join...
+        </div>
+
+        <!-- Move display (shown after both move) -->
+        <div id="move-display" class="hidden flex justify-center items-center gap-8 mb-6">
+            <div class="text-center">
+                <div id="my-move-emoji" class="text-6xl mb-1"></div>
+                <div class="text-xs" style="color:#4a4768;">You</div>
+            </div>
+            <div class="text-2xl" style="color:#2a2740;">vs</div>
+            <div class="text-center">
+                <div id="opp-move-emoji" class="text-6xl mb-1"></div>
+                <div class="text-xs" style="color:#4a4768;">Opponent</div>
+            </div>
+        </div>
+
+        <!-- Move buttons -->
+        <div id="move-buttons" class="flex justify-center gap-4 mb-4">
+            <button id="rock-btn" class="move-btn w-28 h-28 rounded-2xl flex flex-col items-center justify-center gap-2" data-move="rock">
+                <span class="text-4xl">🪨</span>
+                <span class="text-xs font-semibold" style="color:#6b6888;">Rock</span>
             </button>
-            <button id="cancel-auth-btn" class="w-full py-3 rounded-xl font-semibold text-base" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">
-                Cancel
+            <button id="paper-btn" class="move-btn w-28 h-28 rounded-2xl flex flex-col items-center justify-center gap-2" data-move="paper">
+                <span class="text-4xl">📄</span>
+                <span class="text-xs font-semibold" style="color:#6b6888;">Paper</span>
+            </button>
+            <button id="scissors-btn" class="move-btn w-28 h-28 rounded-2xl flex flex-col items-center justify-center gap-2" data-move="scissors">
+                <span class="text-4xl">✂️</span>
+                <span class="text-xs font-semibold" style="color:#6b6888;">Scissors</span>
             </button>
         </div>
+
+        <button id="leave-rps-btn" class="w-full py-2 rounded-xl text-xs font-medium" style="border:1px solid #1e1d2e; color:#4a4768; background:transparent;">
+            Leave game
+        </button>
     </div>
+</div>
 
-    <!-- Username Modal -->
-    <div id="username-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
-        <div class="modal-anim rounded-2xl w-full max-w-md mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
-            <h3 class="text-2xl font-bold mb-1" style="color:#f1f0ff;">Choose your username</h3>
-            <p class="text-sm mb-6" style="color:#6b6888;">This is how other players will see you</p>
-            <input type="text" id="username-input" placeholder="e.g. ProPlayer99" maxlength="20" class="w-full rounded-xl px-4 py-3 text-base mb-3">
-            <button id="save-username-btn" class="btn-primary w-full py-3 rounded-xl font-semibold text-base">Let's Play!</button>
-        </div>
-    </div>
-
-    <!-- RPS Modal -->
-    <div id="rps-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
-        <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-xl font-bold" style="color:#f1f0ff;">Rock Paper Scissors</h3>
-                    <p class="text-sm" style="color:#6b6888;">First to 3 wins · $5 entry</p>
-                </div>
-                <button id="close-rps-btn" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
-            </div>
-            <div class="flex justify-center gap-12 mb-6">
-                <div class="text-center">
-                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
-                    <div id="my-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
-                </div>
-                <div class="flex items-center text-2xl font-light" style="color:#2a2740;">vs</div>
-                <div class="text-center">
-                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">Opponent</div>
-                    <div id="opp-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
-                </div>
-            </div>
-            <div id="rps-result" class="min-h-[72px] flex items-center justify-center text-base font-medium mb-6 rounded-xl px-4 text-center" style="background:#0d0c18; border:1px solid #1e1d2e;"></div>
-            <div id="move-buttons" class="flex justify-center gap-4 mb-6">
-                <button id="rock-btn" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
-                    <span class="text-3xl">🪨</span><span class="text-xs font-medium" style="color:#6b6888;">Rock</span>
-                </button>
-                <button id="paper-btn" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
-                    <span class="text-3xl">📄</span><span class="text-xs font-medium" style="color:#6b6888;">Paper</span>
-                </button>
-                <button id="scissors-btn" class="move-btn w-24 h-24 rounded-2xl flex flex-col items-center justify-center gap-1" style="background:#1a1828; border:1px solid #2a2740;">
-                    <span class="text-3xl">✂️</span><span class="text-xs font-medium" style="color:#6b6888;">Scissors</span>
-                </button>
-            </div>
-            <button id="reset-rps-btn" class="w-full py-2.5 rounded-xl text-sm font-medium" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">Restart Match</button>
-        </div>
-    </div>
-
-    <!-- Trivia Modal -->
-    <div id="trivia-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
-        <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-xl font-bold" style="color:#f1f0ff;">Trivia Battle</h3>
-                    <p class="text-sm" style="color:#6b6888;">10 questions · $5 entry</p>
-                </div>
-                <button id="close-trivia-btn" class="w-8 h-8 flex items-center justify-center rounded-lg text-xl" style="color:#6b6888;">×</button>
-            </div>
-            <div class="flex justify-center gap-12 mb-6">
-                <div class="text-center">
-                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
-                    <div id="trivia-my-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
-                </div>
-                <div class="flex items-center text-2xl font-light" style="color:#2a2740;">vs</div>
-                <div class="text-center">
-                    <div class="text-xs font-medium uppercase tracking-wide mb-1" style="color:#4a4768;">Opponent</div>
-                    <div id="trivia-opp-score" class="text-5xl font-bold" style="color:#f1f0ff;">0</div>
-                </div>
-            </div>
-            <div id="trivia-status" class="min-h-[200px] flex flex-col justify-center">
-                <div id="trivia-waiting-msg" class="text-center" style="color:#4a4768;">
-                    <i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...
-                </div>
-                <div id="trivia-question-area" class="hidden">
-                    <div class="flex justify-between items-center mb-3">
-                        <span id="trivia-q-num" class="text-xs font-medium uppercase tracking-wide" style="color:#4a4768;">Question 1 of 10</span>
-                    </div>
-                    <div class="w-full h-1 rounded-full mb-4 overflow-hidden" style="background:#1e1d2e;">
-                        <div id="trivia-timer-bar" class="h-full rounded-full" style="background:#7c3aed; width:100%;"></div>
-                    </div>
-                    <p id="trivia-question" class="text-base font-semibold mb-4 text-center" style="color:#f1f0ff;"></p>
-                    <div id="trivia-options" class="grid grid-cols-2 gap-3"></div>
-                    <div id="trivia-feedback" class="mt-4 text-center text-sm font-medium hidden"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- FIX 2: Funds Modal now has a "Get $20 Test Credits" button -->
-    <div id="funds-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
-        <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center" style="background:#13121f; border:1px solid #2a2740;">
-            <div class="text-4xl mb-4">💸</div>
-            <h3 class="text-xl font-bold mb-2" style="color:#f1f0ff;">Insufficient Funds</h3>
-            <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter a game.</p>
-            <button id="test-credits-btn" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-2" style="background:#14532d; border:1px solid #22c55e; color:#86efac;">
-                <i class="fa-solid fa-flask text-sm"></i> Get $20 Free Test Credits
-            </button>
-            <button id="close-funds-btn" class="w-full py-2.5 rounded-xl text-sm font-medium" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">
-                Cancel
-            </button>
-        </div>
-    </div>
-
-    <script>
-        const SUPABASE_URL = 'https://ubrfipncygmigbgqhwal.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicmZpcG5jeWdtaWdiZ3Fod2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjQ5ODIsImV4cCI6MjA5NTgwMDk4Mn0.jQLo9EhCGdn_gB5-qWSCnrYrvP9sLbs1GHbtBDqz5yA';
-        const WS_URL = 'wss://dueliq-production.up.railway.app';
-
-        let db = null;
-        let currentUser = null;
-        let userProfile = null;
-        let ws = null;
-        let currentGame = null;
-        let onlinePlayers = 128;
-        let myScore = 0, oppScore = 0;
-        let myMove = null, oppMove = null;
-        let waitingForOpp = false;
-        let triviaTimerInterval = null;
-        let triviaTimeLeft = 15;
-        let triviaAnswered = false;
-        // Remember which game was clicked before funds check, so we can auto-enter after adding credits
-        let pendingGame = null;
-
-        function initSupabase() {
-            db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-
-        function updateNav() {
-            const walletEl = document.getElementById('nav-wallet');
-            if (userProfile) {
-                document.getElementById('nav-user').innerHTML =
-                    '<div class="flex items-center gap-2">' +
-                    '<div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828; border:1px solid #2a2740;">' +
-                    '<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">' + userProfile.username[0].toUpperCase() + '</div>' +
-                    '<span class="text-sm font-medium" style="color:#f1f0ff;">' + userProfile.username + '</span>' +
-                    '</div>' +
-                    '<button id="logout-btn" class="text-xs" style="color:#4a4768;">Logout</button>' +
-                    '</div>';
-                document.getElementById('logout-btn').addEventListener('click', logout);
-                walletEl.classList.remove('hidden');
-                walletEl.classList.add('flex');
-                document.getElementById('wallet-display').textContent = '$' + parseFloat(userProfile.wallet).toFixed(2);
-            } else {
-                document.getElementById('nav-user').innerHTML =
-                    '<button id="signin-btn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign In</button>';
-                document.getElementById('signin-btn').addEventListener('click', showAuthModal);
-                walletEl.classList.add('hidden');
-            }
-        }
-
-        function showAuthModal() {
-            document.getElementById('auth-modal').classList.remove('hidden');
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-        }
-
-        async function signInWithGoogle() {
-            const result = await db.auth.signInWithOAuth({
-                provider: 'google',
-                options: { redirectTo: window.location.href }
-            });
-            if (result.error) alert('Login error: ' + result.error.message);
-        }
-
-        async function handleSession(session) {
-            if (!session) {
-                currentUser = null;
-                userProfile = null;
-                updateNav();
-                return;
-            }
-            currentUser = session.user;
-            const result = await db.from('profiles').select('*').eq('id', currentUser.id).single();
-            if (!result.data) {
-                closeAuthModal();
-                document.getElementById('username-modal').classList.remove('hidden');
-            } else {
-                userProfile = result.data;
-                closeAuthModal();
-                updateNav();
-            }
-        }
-
-        async function saveUsername() {
-            const username = document.getElementById('username-input').value.trim();
-            if (!username) { alert('Please enter a username'); return; }
-            const result = await db.from('profiles').insert({ id: currentUser.id, username: username, wallet: 0 });
-            if (result.error) {
-                if (result.error.code === '23505') alert('Username taken! Try another.');
-                else alert('Error: ' + result.error.message);
-                return;
-            }
-            userProfile = { id: currentUser.id, username: username, wallet: 0 };
-            document.getElementById('username-modal').classList.add('hidden');
-            updateNav();
-        }
-
-        async function logout() {
-            await db.auth.signOut();
-            currentUser = null;
-            userProfile = null;
-            updateNav();
-        }
-
-        async function enterGame(game) {
-            if (!currentUser || !userProfile) { showAuthModal(); return; }
-            if (userProfile.wallet < 5) {
-                pendingGame = game;
-                document.getElementById('funds-modal').classList.remove('hidden');
-                return;
-            }
-            const newWallet = userProfile.wallet - 5;
-            await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
-            userProfile.wallet = newWallet;
-            document.getElementById('wallet-display').textContent = '$' + newWallet.toFixed(2);
-            currentGame = game;
-            if (game === 'rps') {
-                document.getElementById('rps-modal').classList.remove('hidden');
-                resetRPS();
-            } else {
-                document.getElementById('trivia-modal').classList.remove('hidden');
-                resetTrivia();
-            }
-            connectWebSocket(game);
-        }
-
-        // FIX 2: Add $20 test credits to wallet in Supabase, then auto-enter pending game
-        async function addTestCredits() {
-            if (!currentUser || !userProfile) return;
-            const newWallet = userProfile.wallet + 20;
-            const result = await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
-            if (result.error) { alert('Error adding credits: ' + result.error.message); return; }
-            userProfile.wallet = newWallet;
-            document.getElementById('wallet-display').textContent = '$' + newWallet.toFixed(2);
-            document.getElementById('funds-modal').classList.add('hidden');
-            if (pendingGame) {
-                const game = pendingGame;
-                pendingGame = null;
-                enterGame(game);
-            }
-        }
-
-        async function addWinnings(amount) {
-            userProfile.wallet += amount;
-            await db.from('profiles').update({ wallet: userProfile.wallet }).eq('id', currentUser.id);
-            document.getElementById('wallet-display').textContent = '$' + userProfile.wallet.toFixed(2);
-        }
-
-        function closeGame(game) {
-            document.getElementById(game + '-modal').classList.add('hidden');
-            if (ws) { ws.close(); ws = null; }
-            currentGame = null;
-            if (triviaTimerInterval) { clearInterval(triviaTimerInterval); triviaTimerInterval = null; }
-        }
-
-        function connectWebSocket(game) {
-            if (ws) ws.close();
-            ws = new WebSocket(WS_URL);
-            ws.onopen = function() {
-                ws.send(JSON.stringify({ game: game, action: 'join', player: userProfile.username, user_id: currentUser.id }));
-            };
-            ws.onmessage = function(event) {
-                var data = JSON.parse(event.data);
-                if (game === 'rps') handleRPSMessage(data);
-                else handleTriviaMessage(data);
-            };
-            ws.onerror = function(err) {
-                console.error('WebSocket error:', err);
-            };
-            ws.onclose = function() {
-                console.log('WebSocket closed');
-            };
-        }
-
-        function handleRPSMessage(data) {
-            var result = document.getElementById('rps-result');
-            if (data.type === 'waiting') {
-                result.innerHTML = '<span style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...</span>';
-                setRPSButtons(false);
-            } else if (data.type === 'matched') {
-                result.innerHTML = '<span style="color:#22c55e;" class="font-semibold"><i class="fa-solid fa-check-circle mr-2"></i>Opponent found! Make your move.</span>';
-                setRPSButtons(true);
-            } else if (data.type === 'opponent_move') {
-                oppMove = data.move;
-                if (myMove) resolveRPSRound();
-                else waitingForOpp = true;
-            } else if (data.type === 'opponent_left') {
-                result.innerHTML = '<span style="color:#ef4444;">Opponent disconnected.</span>';
-                setRPSButtons(false);
-            }
-        }
-
-        function sendRPSMove(move) {
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
-            myMove = move;
-            setRPSButtons(false);
-            document.getElementById('rps-result').innerHTML = '<span style="color:#4a4768;">You picked ' + getRPSEmoji(move) + ' waiting for opponent...</span>';
-            ws.send(JSON.stringify({ game: 'rps', move: move }));
-            if (waitingForOpp && oppMove) { waitingForOpp = false; resolveRPSRound(); }
-        }
-
-        function resolveRPSRound() {
-            var result = getRPSResult(myMove, oppMove);
-            var resultDiv = document.getElementById('rps-result');
-            var msg = getRPSEmoji(myMove) + ' vs ' + getRPSEmoji(oppMove) + ' — ';
-            if (result === 'win') { myScore++; msg += '<span style="color:#22c55e;" class="font-semibold">You win this round!</span>'; }
-            else if (result === 'lose') { oppScore++; msg += '<span style="color:#ef4444;" class="font-semibold">You lose this round</span>'; resultDiv.classList.add('shake'); setTimeout(function() { resultDiv.classList.remove('shake'); }, 400); }
-            else { msg += '<span style="color:#f59e0b;" class="font-semibold">Tie!</span>'; }
-            resultDiv.innerHTML = msg;
-            document.getElementById('my-score').textContent = myScore;
-            document.getElementById('opp-score').textContent = oppScore;
-            myMove = null; oppMove = null;
-            if (myScore >= 3 || oppScore >= 3) setTimeout(endRPS, 1000);
-            else setTimeout(function() { setRPSButtons(true); }, 1200);
-        }
-
-        function endRPS() {
-            var resultDiv = document.getElementById('rps-result');
-            var winnerId = myScore > oppScore ? currentUser.id : null;
-            if (ws && ws.readyState === WebSocket.OPEN && winnerId) {
-                ws.send(JSON.stringify({ game: 'rps', action: 'game_over', winner_id: winnerId }));
-            }
-            if (myScore > oppScore) {
-                addWinnings(9);
-                resultDiv.innerHTML = '<span style="color:#22c55e;" class="font-bold text-lg">You won! +$9 added to your wallet.</span>';
-            } else {
-                resultDiv.innerHTML = '<span style="color:#ef4444;" class="font-bold text-lg">You lost this match.</span>';
-            }
-            setRPSButtons(false);
-        }
-
-        function getRPSResult(p1, p2) {
-            if (p1 === p2) return 'tie';
-            if ((p1==='rock'&&p2==='scissors')||(p1==='paper'&&p2==='rock')||(p1==='scissors'&&p2==='paper')) return 'win';
-            return 'lose';
-        }
-        function getRPSEmoji(m) { return m==='rock'?'🪨':m==='paper'?'📄':'✂️'; }
-        function setRPSButtons(enabled) {
-            document.querySelectorAll('#move-buttons button').forEach(function(btn) { btn.disabled = !enabled; });
-        }
-        function resetRPS() {
-            myScore = 0; oppScore = 0; myMove = null; oppMove = null; waitingForOpp = false;
-            document.getElementById('my-score').textContent = '0';
-            document.getElementById('opp-score').textContent = '0';
-            document.getElementById('rps-result').innerHTML = '';
-            setRPSButtons(false);
-        }
-
-        function handleTriviaMessage(data) {
-            if (data.type === 'waiting') {
-                document.getElementById('trivia-waiting-msg').classList.remove('hidden');
-                document.getElementById('trivia-question-area').classList.add('hidden');
-            } else if (data.type === 'trivia_score_update') {
-                // Opponent answered wrong — update our score display live
-                document.getElementById('trivia-my-score').textContent = data.my_score;
-                document.getElementById('trivia-opp-score').textContent = data.opp_score;
-                // Flash the score to draw attention
-                var myScoreEl = document.getElementById('trivia-my-score');
-                myScoreEl.style.color = '#22c55e';
-                setTimeout(function() { myScoreEl.style.color = '#f1f0ff'; }, 800);
-            } else if (data.type === 'matched') {
-                document.getElementById('trivia-waiting-msg').innerHTML = '<span style="color:#22c55e;">Opponent found! Get ready...</span>';
-            } else if (data.type === 'trivia_question') {
-                showTriviaQuestion(data);
-            } else if (data.type === 'trivia_result') {
-                showTriviaResult(data);
-            } else if (data.type === 'trivia_end') {
-                endTrivia(data);
-            } else if (data.type === 'opponent_left') {
-                document.getElementById('trivia-waiting-msg').innerHTML = '<span style="color:#ef4444;">Opponent disconnected.</span>';
-                document.getElementById('trivia-waiting-msg').classList.remove('hidden');
-                document.getElementById('trivia-question-area').classList.add('hidden');
-                if (triviaTimerInterval) clearInterval(triviaTimerInterval);
-            }
-        }
-
-        function showTriviaQuestion(data) {
-            triviaAnswered = false;
-            document.getElementById('trivia-waiting-msg').classList.add('hidden');
-            document.getElementById('trivia-question-area').classList.remove('hidden');
-            document.getElementById('trivia-feedback').classList.add('hidden');
-            document.getElementById('trivia-q-num').textContent = 'Question ' + (data.index + 1) + ' of ' + data.total;
-            document.getElementById('trivia-question').textContent = data.question;
-            document.getElementById('trivia-my-score').textContent = data.scores ? data.scores.you : 0;
-            document.getElementById('trivia-opp-score').textContent = data.scores ? data.scores.opp : 0;
-            var optDiv = document.getElementById('trivia-options');
-            optDiv.innerHTML = '';
-            data.options.forEach(function(opt) {
-                var btn = document.createElement('button');
-                btn.className = 'trivia-opt w-full py-3 px-4 rounded-xl text-sm font-medium text-left';
-                btn.style.color = '#f1f0ff';
-                btn.textContent = opt;
-                btn.addEventListener('click', function() { submitTriviaAnswer(opt); });
-                optDiv.appendChild(btn);
-            });
-            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
-            triviaTimeLeft = 15;
-            var bar = document.getElementById('trivia-timer-bar');
-            bar.style.width = '100%';
-            bar.style.background = '#7c3aed';
-            triviaTimerInterval = setInterval(function() {
-                triviaTimeLeft -= 0.1;
-                var pct = (triviaTimeLeft / 15) * 100;
-                bar.style.width = pct + '%';
-                if (pct < 30) bar.style.background = '#ef4444';
-                else if (pct < 60) bar.style.background = '#f59e0b';
-                if (triviaTimeLeft <= 0) { clearInterval(triviaTimerInterval); if (!triviaAnswered) submitTriviaAnswer(null); }
-            }, 100);
-        }
-
-        function submitTriviaAnswer(answer) {
-            if (triviaAnswered) return;
-            triviaAnswered = true;
-            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
-            if (!ws || ws.readyState !== WebSocket.OPEN) return;
-            ws.send(JSON.stringify({ game: 'trivia', action: 'answer', answer: answer }));
-            document.querySelectorAll('.trivia-opt').forEach(function(btn) { btn.disabled = true; });
-            var fb = document.getElementById('trivia-feedback');
-            fb.classList.remove('hidden');
-            fb.style.color = '#4a4768';
-            fb.textContent = answer ? 'Waiting for result...' : 'Time\'s up!';
-        }
-
-        function showTriviaResult(data) {
-            document.querySelectorAll('.trivia-opt').forEach(function(btn) {
-                if (btn.textContent === data.correct_answer) btn.classList.add('reveal');
-            });
-            var fb = document.getElementById('trivia-feedback');
-            fb.classList.remove('hidden');
-            if (data.correct) { fb.style.color = '#22c55e'; fb.textContent = 'Correct! +1 point'; }
-            else { fb.style.color = '#ef4444'; fb.textContent = 'Wrong! Answer was: ' + data.correct_answer; }
-            document.getElementById('trivia-my-score').textContent = data.my_score;
-            document.getElementById('trivia-opp-score').textContent = data.opp_score;
-        }
-
-        function endTrivia(data) {
-            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
-            document.getElementById('trivia-question-area').classList.add('hidden');
-            document.getElementById('trivia-waiting-msg').classList.remove('hidden');
-            if (data.won) {
-                addWinnings(9);
-                document.getElementById('trivia-waiting-msg').innerHTML = '<div class="text-center"><div class="text-4xl mb-3">🏆</div><div class="text-lg font-bold" style="color:#22c55e;">You won! +$9 added to wallet.</div></div>';
-            } else {
-                document.getElementById('trivia-waiting-msg').innerHTML = '<div class="text-center"><div class="text-4xl mb-3">😔</div><div class="text-lg font-bold" style="color:#ef4444;">You lost this match.</div></div>';
-            }
-            document.getElementById('trivia-my-score').textContent = data.my_score;
-            document.getElementById('trivia-opp-score').textContent = data.opp_score;
-        }
-
-        function resetTrivia() {
-            triviaAnswered = false;
-            if (triviaTimerInterval) clearInterval(triviaTimerInterval);
-            document.getElementById('trivia-my-score').textContent = '0';
-            document.getElementById('trivia-opp-score').textContent = '0';
-            document.getElementById('trivia-waiting-msg').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Waiting for an opponent...';
-            document.getElementById('trivia-waiting-msg').style.color = '#4a4768';
-            document.getElementById('trivia-waiting-msg').classList.remove('hidden');
-            document.getElementById('trivia-question-area').classList.add('hidden');
-        }
-
-        function animatePlayers() {
-            onlinePlayers += Math.floor(Math.random() * 5) - 2;
-            if (onlinePlayers < 80) onlinePlayers = 80;
-            document.getElementById('live-players').textContent = onlinePlayers + ' players online';
-            document.getElementById('stat-players').textContent = onlinePlayers;
-            setTimeout(animatePlayers, 3000);
-        }
-
-        // ── Leaderboard ──────────────────────────────────────
-        let currentLbGame = 'rps';
-
-        async function loadLeaderboard(game) {
-            currentLbGame = game;
-            const rowsEl = document.getElementById('leaderboard-rows');
-            rowsEl.innerHTML = '<div class="px-5 py-8 text-center text-sm" style="color:#4a4768;"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Loading...</div>';
-
-            // Tab styles
-            document.getElementById('lb-rps-btn').style.background = game === 'rps' ? '#7c3aed' : 'transparent';
-            document.getElementById('lb-rps-btn').style.color = game === 'rps' ? 'white' : '#6b6888';
-            document.getElementById('lb-rps-btn').style.border = game === 'rps' ? 'none' : '1px solid #2a2740';
-            document.getElementById('lb-trivia-btn').style.background = game === 'trivia' ? '#7c3aed' : 'transparent';
-            document.getElementById('lb-trivia-btn').style.color = game === 'trivia' ? 'white' : '#6b6888';
-            document.getElementById('lb-trivia-btn').style.border = game === 'trivia' ? 'none' : '1px solid #2a2740';
-
-            // Step 1: fetch matches
-            const matchRes = await db
-                .from('matches')
-                .select('*')
-                .eq('game', game)
-                .order('created_at', { ascending: false })
-                .limit(20);
-
-            if (matchRes.error || !matchRes.data || matchRes.data.length === 0) {
-                rowsEl.innerHTML = '<div class="px-5 py-8 text-center text-sm" style="color:#4a4768;">No matches yet. Be the first to play!</div>';
-                return;
-            }
-
-            // Step 2: collect all unique user IDs and fetch their usernames
-            const ids = new Set();
-            matchRes.data.forEach(function(m) {
-                if (m.player1_id) ids.add(m.player1_id);
-                if (m.player2_id) ids.add(m.player2_id);
-                if (m.winner_id) ids.add(m.winner_id);
-            });
-
-            const profileRes = await db
-                .from('profiles')
-                .select('id, username')
-                .in('id', Array.from(ids));
-
-            const nameMap = {};
-            if (profileRes.data) {
-                profileRes.data.forEach(function(p) { nameMap[p.id] = p.username; });
-            }
-
-            // Step 3: render
-            rowsEl.innerHTML = matchRes.data.map(function(match) {
-                var winnerName = nameMap[match.winner_id] || 'Unknown';
-                var loserId = match.winner_id === match.player1_id ? match.player2_id : match.player1_id;
-                var loserName = nameMap[loserId] || 'Unknown';
-                var timeAgo = getTimeAgo(new Date(match.created_at));
-                return '<div class="grid grid-cols-4 px-5 py-4 items-center hover:bg-white/5 transition" style="background:transparent;">' +
-                    '<div class="flex items-center gap-2">' +
-                        '<span class="text-sm">🏆</span>' +
-                        '<span class="text-sm font-semibold" style="color:#f1f0ff;">' + winnerName + '</span>' +
-                    '</div>' +
-                    '<div class="flex items-center gap-2">' +
-                        '<span class="text-sm">💀</span>' +
-                        '<span class="text-sm" style="color:#6b6888;">' + loserName + '</span>' +
-                    '</div>' +
-                    '<div class="text-sm" style="color:#4a4768;">' + timeAgo + '</div>' +
-                    '<div class="text-right text-sm font-semibold" style="color:#22c55e;">+$' + parseFloat(match.payout || 9).toFixed(2) + '</div>' +
-                '</div>';
-            }).join('<div style="border-top:1px solid #1e1d2e;"></div>');
-        }
-
-        function getTimeAgo(date) {
-            var seconds = Math.floor((new Date() - date) / 1000);
-            if (seconds < 60) return 'just now';
-            if (seconds < 3600) return Math.floor(seconds / 60) + 'm ago';
-            if (seconds < 86400) return Math.floor(seconds / 3600) + 'h ago';
-            return Math.floor(seconds / 86400) + 'd ago';
-        }
-        // ── End Leaderboard ───────────────────────────────────
-// Password protection
+<script>
+// ─── Password protection ───────────────────────────────────────────────────
 const isDev = new URLSearchParams(window.location.search).has('dev');
 if (!isDev) {
-    const password = prompt("Enter password to access DuelIQ:");
-    if (password !== "Cecaceca2008") {
+    const pw = prompt('Enter password to access DuelIQ:');
+    if (pw !== 'Cecaceca2008') {
         document.body.innerHTML = "<div style='display:flex;align-items:center;justify-content:center;height:100vh;background:#09090f;'><h1 style='color:#f1f0ff;font-family:sans-serif;'>Access denied.</h1></div>";
     }
 }
-        document.addEventListener('DOMContentLoaded', function() {
-            initSupabase();
-            animatePlayers();
 
-            // FIX 1: If already logged in, scroll to games. Otherwise show auth modal.
-            document.getElementById('start-btn').addEventListener('click', function() {
-                if (currentUser && userProfile) {
-                    document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    showAuthModal();
+// ─── Config ────────────────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://ubrfipncygmigbgqhwal.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVicmZpcG5jeWdtaWdiZ3Fod2FsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMjQ5ODIsImV4cCI6MjA5NTgwMDk4Mn0.jQLo9EhCGdn_gB5-qWSCnrYrvP9sLbs1GHbtBDqz5yA';
+const WS_URL = 'wss://dueliq-production.up.railway.app';
+
+// ─── State ─────────────────────────────────────────────────────────────────
+let db, currentUser, userProfile, ws;
+let myGameId = null;       // game I created but nobody joined yet
+let activeGameId = null;   // game I'm currently playing
+let onlinePlayers = 128;
+let pendingFee = null;     // fee we tried to create when broke
+
+// ─── Supabase ──────────────────────────────────────────────────────────────
+function initSupabase() {
+    db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+function updateNav() {
+    const walletEl = document.getElementById('nav-wallet');
+    if (userProfile) {
+        document.getElementById('nav-user').innerHTML =
+            '<div class="flex items-center gap-2">' +
+            '<div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828;border:1px solid #2a2740;">' +
+            '<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">' + userProfile.username[0].toUpperCase() + '</div>' +
+            '<span class="text-sm font-medium">' + userProfile.username + '</span>' +
+            '</div>' +
+            '<button id="logout-btn" class="text-xs" style="color:#4a4768;">Logout</button>' +
+            '</div>';
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        walletEl.classList.remove('hidden');
+        walletEl.classList.add('flex');
+        document.getElementById('wallet-display').textContent = '$' + parseFloat(userProfile.wallet).toFixed(2);
+    } else {
+        document.getElementById('nav-user').innerHTML =
+            '<button id="signin-btn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">Sign In</button>';
+        document.getElementById('signin-btn').addEventListener('click', showAuthModal);
+        walletEl.classList.add('hidden');
+    }
+}
+
+function showAuthModal() { document.getElementById('auth-modal').classList.remove('hidden'); }
+function closeAuthModal() { document.getElementById('auth-modal').classList.add('hidden'); }
+
+async function signInWithGoogle() {
+    const r = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    if (r.error) alert('Login error: ' + r.error.message);
+}
+
+async function handleSession(session) {
+    if (!session) { currentUser = null; userProfile = null; updateNav(); return; }
+    currentUser = session.user;
+    const r = await db.from('profiles').select('*').eq('id', currentUser.id).single();
+    if (!r.data) {
+        closeAuthModal();
+        document.getElementById('username-modal').classList.remove('hidden');
+    } else {
+        userProfile = r.data;
+        closeAuthModal();
+        updateNav();
+        connectWebSocket();
+    }
+}
+
+async function saveUsername() {
+    const username = document.getElementById('username-input').value.trim();
+    if (!username) { alert('Please enter a username'); return; }
+    const r = await db.from('profiles').insert({ id: currentUser.id, username, wallet: 0 });
+    if (r.error) {
+        if (r.error.code === '23505') alert('Username taken! Try another.');
+        else alert('Error: ' + r.error.message);
+        return;
+    }
+    userProfile = { id: currentUser.id, username, wallet: 0 };
+    document.getElementById('username-modal').classList.add('hidden');
+    updateNav();
+    connectWebSocket();
+}
+
+async function logout() {
+    await db.auth.signOut();
+    currentUser = null; userProfile = null;
+    if (ws) { ws.close(); ws = null; }
+    updateNav();
+}
+
+async function addWinnings(amount) {
+    userProfile.wallet = parseFloat((userProfile.wallet + amount).toFixed(2));
+    await db.from('profiles').update({ wallet: userProfile.wallet }).eq('id', currentUser.id);
+    document.getElementById('wallet-display').textContent = '$' + userProfile.wallet.toFixed(2);
+}
+
+async function deductWallet(amount) {
+    userProfile.wallet = parseFloat((userProfile.wallet - amount).toFixed(2));
+    await db.from('profiles').update({ wallet: userProfile.wallet }).eq('id', currentUser.id);
+    document.getElementById('wallet-display').textContent = '$' + userProfile.wallet.toFixed(2);
+}
+
+async function addTestCredits() {
+    if (!currentUser || !userProfile) return;
+    const newWallet = userProfile.wallet + 20;
+    const r = await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
+    if (r.error) { alert('Error: ' + r.error.message); return; }
+    userProfile.wallet = newWallet;
+    document.getElementById('wallet-display').textContent = '$' + newWallet.toFixed(2);
+    document.getElementById('funds-modal').classList.add('hidden');
+    if (pendingFee) { const f = pendingFee; pendingFee = null; openCreateModal(f); }
+}
+
+// ─── WebSocket ─────────────────────────────────────────────────────────────
+function connectWebSocket() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    ws = new WebSocket(WS_URL);
+    ws.onopen = () => console.log('[WS] Connected');
+    ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
+    ws.onerror = (e) => console.error('[WS] Error', e);
+    ws.onclose = () => {
+        console.log('[WS] Closed — reconnecting in 3s');
+        setTimeout(() => { if (currentUser) connectWebSocket(); }, 3000);
+    };
+}
+
+function wsSend(obj) {
+    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+function handleMessage(data) {
+    if (data.type === 'lobby_update') renderLobby(data.games);
+    else if (data.type === 'game_created') onGameCreated(data);
+    else if (data.type === 'game_cancelled') onGameCancelled(data);
+    else if (data.type === 'match_started') onMatchStarted(data);
+    else if (data.type === 'opponent_moved') onOpponentMoved();
+    else if (data.type === 'round_result') onRoundResult(data);
+    else if (data.type === 'match_over') onMatchOver(data);
+    else if (data.type === 'opponent_disconnected') onOpponentDisconnected(data);
+    else if (data.type === 'error') alert(data.msg);
+}
+
+// ─── Lobby ─────────────────────────────────────────────────────────────────
+function feeBadgeClass(fee) {
+    if (fee >= 100) return 'fee-whale';
+    if (fee >= 25) return 'fee-high';
+    if (fee >= 10) return 'fee-mid';
+    return 'fee-low';
+}
+
+function renderLobby(games) {
+    const rows = document.getElementById('lobby-rows');
+    document.getElementById('stat-games').textContent = games.length;
+
+    if (games.length === 0) {
+        rows.innerHTML = '<div class="lobby-empty"><div class="text-3xl mb-3">🎮</div><div class="font-medium" style="color:#6b6888;">No open games</div><div class="text-sm mt-1">Be the first to create one!</div></div>';
+        return;
+    }
+
+    rows.innerHTML = games.map(g => {
+        const pot = (g.entry_fee * 2).toFixed(2);
+        const isMyGame = myGameId && g.game_id === myGameId;
+        const badgeClass = feeBadgeClass(g.entry_fee);
+        return `<div class="game-row grid grid-cols-4 px-5 py-4 items-center slide-in">
+            <div class="flex items-center gap-2">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:#7c3aed;">${g.creator[0].toUpperCase()}</div>
+                <span class="text-sm font-medium">${g.creator}</span>
+                ${isMyGame ? '<span class="text-xs px-1.5 py-0.5 rounded" style="background:#1a1535;color:#a78bfa;">You</span>' : ''}
+            </div>
+            <div>
+                <span class="text-sm font-bold px-2 py-1 rounded-lg ${badgeClass}">$${parseFloat(g.entry_fee).toFixed(2)}</span>
+            </div>
+            <div class="text-sm font-semibold" style="color:#22c55e;">$${pot}</div>
+            <div class="text-right">
+                ${isMyGame
+                    ? '<span class="text-xs" style="color:#4a4768;">Waiting...</span>'
+                    : `<button class="join-btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold" data-id="${g.game_id}" data-fee="${g.entry_fee}">Join</button>`
                 }
-            });
+            </div>
+        </div>`;
+    }).join('');
 
-            document.getElementById('view-btn').addEventListener('click', function() {
-                document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
-            });
-            document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
-            document.getElementById('cancel-auth-btn').addEventListener('click', closeAuthModal);
-            document.getElementById('save-username-btn').addEventListener('click', saveUsername);
-            document.getElementById('close-rps-btn').addEventListener('click', function() { closeGame('rps'); });
-            document.getElementById('close-trivia-btn').addEventListener('click', function() { closeGame('trivia'); });
-            document.getElementById('close-funds-btn').addEventListener('click', function() {
-                pendingGame = null;
-                document.getElementById('funds-modal').classList.add('hidden');
-            });
-            // FIX 2: Wire up test credits button
-            document.getElementById('test-credits-btn').addEventListener('click', addTestCredits);
+    // Wire up join buttons
+    document.querySelectorAll('.join-btn').forEach(btn => {
+        btn.addEventListener('click', () => joinGame(btn.dataset.id, parseFloat(btn.dataset.fee)));
+    });
+}
 
-            document.getElementById('rock-btn').addEventListener('click', function() { sendRPSMove('rock'); });
-            document.getElementById('paper-btn').addEventListener('click', function() { sendRPSMove('paper'); });
-            document.getElementById('scissors-btn').addEventListener('click', function() { sendRPSMove('scissors'); });
-            document.getElementById('reset-rps-btn').addEventListener('click', resetRPS);
-            document.getElementById('rps-card').addEventListener('click', function() { enterGame('rps'); });
-            document.getElementById('trivia-card').addEventListener('click', function() { enterGame('trivia'); });
+// ─── Create Game ───────────────────────────────────────────────────────────
+function openCreateModal(prefillFee) {
+    if (!currentUser || !userProfile) { showAuthModal(); return; }
+    document.getElementById('create-modal').classList.remove('hidden');
+    if (prefillFee) document.getElementById('fee-input').value = prefillFee;
+    updatePotPreview();
+}
 
-            document.getElementById('lb-rps-btn').addEventListener('click', function() { loadLeaderboard('rps'); });
-            document.getElementById('lb-trivia-btn').addEventListener('click', function() { loadLeaderboard('trivia'); });
+function updatePotPreview() {
+    const fee = parseFloat(document.getElementById('fee-input').value) || 1;
+    const pot = fee * 2;
+    const winAmount = (pot * 0.85).toFixed(2);
+    document.getElementById('pot-preview').textContent = '$' + pot.toFixed(2);
+    document.getElementById('win-preview').textContent = '$' + winAmount;
+}
 
-            db.auth.getSession().then(function(result) {
-                handleSession(result.data.session);
-                loadLeaderboard('rps'); // load after db is ready
-            });
-            db.auth.onAuthStateChange(function(event, session) {
-                handleSession(session);
-            });
+async function confirmCreateGame() {
+    const fee = parseFloat(document.getElementById('fee-input').value);
+    if (!fee || fee < 1) { alert('Minimum entry fee is $1'); return; }
+
+    if (userProfile.wallet < fee) {
+        pendingFee = fee;
+        document.getElementById('create-modal').classList.add('hidden');
+        document.getElementById('funds-needed').textContent = '$' + fee.toFixed(2);
+        document.getElementById('funds-balance').textContent = '$' + userProfile.wallet.toFixed(2);
+        document.getElementById('funds-modal').classList.remove('hidden');
+        return;
+    }
+
+    document.getElementById('create-modal').classList.add('hidden');
+    await deductWallet(fee);
+    wsSend({ action: 'create_game', entry_fee: fee, user_id: currentUser.id, username: userProfile.username });
+}
+
+function onGameCreated(data) {
+    myGameId = data.game_id;
+    document.getElementById('my-game-banner').classList.remove('hidden');
+    document.getElementById('my-game-fee').textContent = '$' + parseFloat(data.entry_fee).toFixed(2);
+}
+
+function onGameCancelled(data) {
+    // Refund
+    if (data.game_id === myGameId) {
+        myGameId = null;
+        document.getElementById('my-game-banner').classList.add('hidden');
+        // The server already removed it from the lobby — now refund wallet
+        // We need to find the fee — stored in the banner
+        const feeText = document.getElementById('my-game-fee').textContent.replace('$', '');
+        const fee = parseFloat(feeText);
+        if (fee > 0) addWinnings(fee);
+    }
+}
+
+async function cancelMyGame() {
+    if (!myGameId) return;
+    wsSend({ action: 'cancel_game', game_id: myGameId });
+}
+
+// ─── Join Game ─────────────────────────────────────────────────────────────
+async function joinGame(gameId, fee) {
+    if (!currentUser || !userProfile) { showAuthModal(); return; }
+
+    if (userProfile.wallet < fee) {
+        pendingFee = null;
+        document.getElementById('funds-needed').textContent = '$' + fee.toFixed(2);
+        document.getElementById('funds-balance').textContent = '$' + userProfile.wallet.toFixed(2);
+        document.getElementById('funds-modal').classList.remove('hidden');
+        return;
+    }
+
+    await deductWallet(fee);
+    wsSend({ action: 'join_game', game_id: gameId, user_id: currentUser.id, username: userProfile.username });
+}
+
+// ─── RPS Game ──────────────────────────────────────────────────────────────
+let myScore = 0, oppScore = 0;
+let myMoveChosen = null;
+let waitingForOppMove = false;
+let currentEntryFee = 0;
+let opponentName = '';
+
+function onMatchStarted(data) {
+    activeGameId = data.game_id;
+    myGameId = null;
+    currentEntryFee = data.entry_fee;
+    opponentName = data.opponent;
+    myScore = 0; oppScore = 0; myMoveChosen = null; waitingForOppMove = false;
+
+    document.getElementById('my-game-banner').classList.add('hidden');
+    document.getElementById('my-score').textContent = '0';
+    document.getElementById('opp-score').textContent = '0';
+    document.getElementById('opp-name-label').textContent = data.opponent;
+    document.getElementById('rps-pot').textContent = '$' + (data.entry_fee * 2).toFixed(2);
+    document.getElementById('rps-subtitle').textContent = 'Best of 3 · vs ' + data.opponent;
+    document.getElementById('move-display').classList.add('hidden');
+    setRPSResult('⚔️ Match found! Make your move.', '#a78bfa');
+    setMoveButtons(true);
+    document.getElementById('rps-modal').classList.remove('hidden');
+}
+
+function setMoveButtons(enabled) {
+    document.querySelectorAll('.move-btn').forEach(b => {
+        b.disabled = !enabled;
+        b.classList.remove('selected');
+    });
+}
+
+function setRPSResult(html, color) {
+    const el = document.getElementById('rps-result');
+    el.innerHTML = html;
+    el.style.color = color || '#f1f0ff';
+    el.style.background = '#0d0c18';
+    el.style.border = '1px solid #1e1d2e';
+}
+
+function sendMove(move) {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    myMoveChosen = move;
+    setMoveButtons(false);
+    document.querySelectorAll('.move-btn').forEach(b => {
+        if (b.dataset.move === move) b.classList.add('selected');
+    });
+    b.disabled = false; // keep it visually selected but locked
+    setRPSResult('✅ Move locked in! Waiting for opponent...', '#4a4768');
+    wsSend({ action: 'move', move, game_id: activeGameId });
+}
+
+function onOpponentMoved() {
+    if (!myMoveChosen) {
+        setRPSResult('⚡ Opponent moved! Your turn...', '#f59e0b');
+    }
+}
+
+const MOVE_EMOJI = { rock: '🪨', paper: '📄', scissors: '✂️' };
+
+function getMatchupAnim(winner, loser) {
+    if (winner === 'rock' && loser === 'scissors') return ['anim-rock-smash', 'anim-scissors-crushed'];
+    if (winner === 'scissors' && loser === 'paper') return ['anim-scissors-slash', 'anim-paper-cut'];
+    if (winner === 'paper' && loser === 'rock') return ['anim-paper-wrap', 'anim-rock-wrapped'];
+    return ['', ''];
+}
+
+function onRoundResult(data) {
+    myMoveChosen = null;
+    myScore = data.your_score;
+    oppScore = data.opp_score;
+
+    // Show moves with animation
+    const moveDisplay = document.getElementById('move-display');
+    const myEmoji = document.getElementById('my-move-emoji');
+    const oppEmoji = document.getElementById('opp-move-emoji');
+
+    myEmoji.textContent = MOVE_EMOJI[data.your_move];
+    oppEmoji.textContent = MOVE_EMOJI[data.opp_move];
+    myEmoji.className = 'text-6xl mb-1';
+    oppEmoji.className = 'text-6xl mb-1';
+    moveDisplay.classList.remove('hidden');
+
+    // Apply matchup animation
+    if (data.result !== 'tie') {
+        const winnerMove = data.result === 'win' ? data.your_move : data.opp_move;
+        const loserMove = data.result === 'win' ? data.opp_move : data.your_move;
+        const [winAnim, loseAnim] = getMatchupAnim(winnerMove, loserMove);
+        if (data.result === 'win') {
+            myEmoji.classList.add(winAnim);
+            oppEmoji.classList.add(loseAnim);
+        } else {
+            myEmoji.classList.add(loseAnim);
+            oppEmoji.classList.add(winAnim);
+        }
+    }
+
+    // Update score with flash
+    const myScoreEl = document.getElementById('my-score');
+    const oppScoreEl = document.getElementById('opp-score');
+    myScoreEl.textContent = myScore;
+    oppScoreEl.textContent = oppScore;
+
+    if (data.result === 'win') {
+        myScoreEl.classList.add('score-flash', 'score-win');
+        setTimeout(() => myScoreEl.classList.remove('score-flash', 'score-win'), 500);
+        setRPSResult('🏆 You win this round!', '#22c55e');
+    } else if (data.result === 'lose') {
+        oppScoreEl.classList.add('score-flash', 'score-lose');
+        setTimeout(() => oppScoreEl.classList.remove('score-flash', 'score-lose'), 500);
+        setRPSResult('💀 Opponent wins this round', '#ef4444');
+    } else {
+        setRPSResult("🤝 Tie! Play again.", '#f59e0b');
+    }
+
+    // Re-enable buttons for next round
+    setTimeout(() => {
+        if (myScore < 3 && oppScore < 3) {
+            setMoveButtons(true);
+            moveDisplay.classList.add('hidden');
+        }
+    }, 1500);
+}
+
+function onMatchOver(data) {
+    activeGameId = null;
+    setMoveButtons(false);
+    document.getElementById('my-score').textContent = data.your_score;
+    document.getElementById('opp-score').textContent = data.opp_score;
+
+    if (data.won) {
+        addWinnings(data.payout);
+        setRPSResult(`🎉 You won! +$${data.payout.toFixed(2)} added to your wallet.`, '#22c55e');
+        document.getElementById('rps-result').style.background = '#052e16';
+        document.getElementById('rps-result').style.border = '1px solid #166534';
+    } else {
+        setRPSResult('😔 You lost this match. Better luck next time!', '#ef4444');
+        document.getElementById('rps-result').style.background = '#1c0a0a';
+        document.getElementById('rps-result').style.border = '1px solid #7f1d1d';
+    }
+    loadLeaderboard();
+}
+
+function onOpponentDisconnected(data) {
+    activeGameId = null;
+    setMoveButtons(false);
+    addWinnings(data.payout);
+    setRPSResult(`🏃 Opponent disconnected! You win by default. +$${data.payout.toFixed(2)}`, '#22c55e');
+    loadLeaderboard();
+}
+
+function closeRPS() {
+    document.getElementById('rps-modal').classList.add('hidden');
+    document.getElementById('move-display').classList.add('hidden');
+    activeGameId = null;
+}
+
+// ─── Leaderboard ───────────────────────────────────────────────────────────
+async function loadLeaderboard() {
+    const rowsEl = document.getElementById('leaderboard-rows');
+    const matchRes = await db.from('matches').select('*').eq('game', 'rps').order('created_at', { ascending: false }).limit(15);
+    if (!matchRes.data || matchRes.data.length === 0) {
+        rowsEl.innerHTML = '<div class="px-5 py-8 text-center text-sm" style="color:#4a4768;">No matches yet. Be the first to play!</div>';
+        return;
+    }
+    const ids = new Set();
+    matchRes.data.forEach(m => { if (m.player1_id) ids.add(m.player1_id); if (m.player2_id) ids.add(m.player2_id); if (m.winner_id) ids.add(m.winner_id); });
+    const profileRes = await db.from('profiles').select('id,username').in('id', Array.from(ids));
+    const nameMap = {};
+    if (profileRes.data) profileRes.data.forEach(p => { nameMap[p.id] = p.username; });
+
+    rowsEl.innerHTML = matchRes.data.map(match => {
+        const winnerName = nameMap[match.winner_id] || 'Unknown';
+        const loserId = match.winner_id === match.player1_id ? match.player2_id : match.player1_id;
+        const loserName = nameMap[loserId] || 'Unknown';
+        const timeAgo = getTimeAgo(new Date(match.created_at));
+        return `<div class="grid grid-cols-4 px-5 py-3 items-center hover:bg-white/5 transition" style="border-top:1px solid #1e1d2e;">
+            <div class="flex items-center gap-2"><span>🏆</span><span class="text-sm font-semibold">${winnerName}</span></div>
+            <div class="flex items-center gap-2"><span>💀</span><span class="text-sm" style="color:#6b6888;">${loserName}</span></div>
+            <div class="text-sm" style="color:#4a4768;">${timeAgo}</div>
+            <div class="text-right text-sm font-semibold" style="color:#22c55e;">+$${parseFloat(match.payout||9).toFixed(2)}</div>
+        </div>`;
+    }).join('');
+}
+
+function getTimeAgo(date) {
+    const s = Math.floor((new Date() - date) / 1000);
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+}
+
+// ─── Player count animation ─────────────────────────────────────────────────
+function animatePlayers() {
+    onlinePlayers += Math.floor(Math.random() * 5) - 2;
+    if (onlinePlayers < 80) onlinePlayers = 80;
+    document.getElementById('live-players').textContent = onlinePlayers + ' players online';
+    document.getElementById('stat-players').textContent = onlinePlayers;
+    setTimeout(animatePlayers, 3000);
+}
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    initSupabase();
+    animatePlayers();
+
+    // Nav
+    document.getElementById('start-btn').addEventListener('click', () => {
+        if (currentUser && userProfile) openCreateModal();
+        else showAuthModal();
+    });
+
+    // Auth
+    document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
+    document.getElementById('cancel-auth-btn').addEventListener('click', closeAuthModal);
+    document.getElementById('save-username-btn').addEventListener('click', saveUsername);
+
+    // Create game
+    document.getElementById('create-game-btn').addEventListener('click', () => openCreateModal());
+    document.getElementById('confirm-create-btn').addEventListener('click', confirmCreateGame);
+    document.getElementById('cancel-create-btn').addEventListener('click', () => document.getElementById('create-modal').classList.add('hidden'));
+    document.getElementById('cancel-game-btn').addEventListener('click', cancelMyGame);
+
+    // Fee presets
+    document.querySelectorAll('.fee-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('fee-input').value = btn.dataset.fee;
+            updatePotPreview();
         });
-    </script>
+    });
+    document.getElementById('fee-input').addEventListener('input', updatePotPreview);
+
+    // Funds modal
+    document.getElementById('test-credits-btn').addEventListener('click', addTestCredits);
+    document.getElementById('close-funds-btn').addEventListener('click', () => {
+        pendingFee = null;
+        document.getElementById('funds-modal').classList.add('hidden');
+    });
+
+    // RPS moves
+    document.querySelectorAll('.move-btn').forEach(btn => {
+        btn.addEventListener('click', () => sendMove(btn.dataset.move));
+    });
+    document.getElementById('leave-rps-btn').addEventListener('click', closeRPS);
+
+    // Auth state
+    db.auth.getSession().then(r => {
+        handleSession(r.data.session);
+        loadLeaderboard();
+    });
+    db.auth.onAuthStateChange((event, session) => handleSession(session));
+});
+</script>
 </body>
 </html>
