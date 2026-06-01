@@ -478,7 +478,7 @@
             if (ws) ws.close();
             ws = new WebSocket(WS_URL);
             ws.onopen = function() {
-                ws.send(JSON.stringify({ game: game, action: 'join', player: userProfile.username }));
+                ws.send(JSON.stringify({ game: game, action: 'join', player: userProfile.username, user_id: currentUser.id }));
             };
             ws.onmessage = function(event) {
                 var data = JSON.parse(event.data);
@@ -537,6 +537,10 @@
 
         function endRPS() {
             var resultDiv = document.getElementById('rps-result');
+            var winnerId = myScore > oppScore ? currentUser.id : null;
+            if (ws && ws.readyState === WebSocket.OPEN && winnerId) {
+                ws.send(JSON.stringify({ game: 'rps', action: 'game_over', winner_id: winnerId }));
+            }
             if (myScore > oppScore) {
                 addWinnings(9);
                 resultDiv.innerHTML = '<span style="color:#22c55e;" class="font-bold text-lg">You won! +$9 added to your wallet.</span>';
