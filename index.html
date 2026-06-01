@@ -67,6 +67,7 @@
             </h1>
             <p class="text-xl max-w-xl mb-10" style="color:#6b6888;">Challenge real players in skill-based games. The better player always wins.</p>
             <div class="flex gap-4">
+                <!-- FIX 1: start-btn now checks auth state before acting -->
                 <button id="start-btn" class="btn-primary px-8 py-3.5 rounded-xl font-semibold text-base">
                     Start Playing <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
@@ -277,13 +278,18 @@
         </div>
     </div>
 
-    <!-- Funds Modal -->
+    <!-- FIX 2: Funds Modal now has a "Get $20 Test Credits" button -->
     <div id="funds-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.7);">
         <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center" style="background:#13121f; border:1px solid #2a2740;">
             <div class="text-4xl mb-4">💸</div>
             <h3 class="text-xl font-bold mb-2" style="color:#f1f0ff;">Insufficient Funds</h3>
-            <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter. Deposit coming soon!</p>
-            <button id="close-funds-btn" class="btn-primary w-full py-3 rounded-xl font-semibold">Got it</button>
+            <p class="text-sm mb-6" style="color:#6b6888;">You need at least $5 to enter a game.</p>
+            <button id="test-credits-btn" class="w-full py-3 rounded-xl font-semibold text-base mb-3 flex items-center justify-center gap-2" style="background:#14532d; border:1px solid #22c55e; color:#86efac;">
+                <i class="fa-solid fa-flask text-sm"></i> Get $20 Free Test Credits
+            </button>
+            <button id="close-funds-btn" class="w-full py-2.5 rounded-xl text-sm font-medium" style="border:1px solid #2a2740; color:#6b6888; background:transparent;">
+                Cancel
+            </button>
         </div>
     </div>
 
@@ -304,6 +310,8 @@
         let triviaTimerInterval = null;
         let triviaTimeLeft = 15;
         let triviaAnswered = false;
+        // Remember which game was clicked before funds check, so we can auto-enter after adding credits
+        let pendingGame = null;
 
         function initSupabase() {
             db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -391,6 +399,7 @@
         async function enterGame(game) {
             if (!currentUser || !userProfile) { showAuthModal(); return; }
             if (userProfile.wallet < 5) {
+                pendingGame = game;
                 document.getElementById('funds-modal').classList.remove('hidden');
                 return;
             }
@@ -407,6 +416,22 @@
                 resetTrivia();
             }
             connectWebSocket(game);
+        }
+
+        // FIX 2: Add $20 test credits to wallet in Supabase, then auto-enter pending game
+        async function addTestCredits() {
+            if (!currentUser || !userProfile) return;
+            const newWallet = userProfile.wallet + 20;
+            const result = await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
+            if (result.error) { alert('Error adding credits: ' + result.error.message); return; }
+            userProfile.wallet = newWallet;
+            document.getElementById('wallet-display').textContent = '$' + newWallet.toFixed(2);
+            document.getElementById('funds-modal').classList.add('hidden');
+            if (pendingGame) {
+                const game = pendingGame;
+                pendingGame = null;
+                enterGame(game);
+            }
         }
 
         async function addWinnings(amount) {
@@ -432,6 +457,12 @@
                 var data = JSON.parse(event.data);
                 if (game === 'rps') handleRPSMessage(data);
                 else handleTriviaMessage(data);
+            };
+            ws.onerror = function(err) {
+                console.error('WebSocket error:', err);
+            };
+            ws.onclose = function() {
+                console.log('WebSocket closed');
             };
         }
 
@@ -621,7 +652,15 @@
             initSupabase();
             animatePlayers();
 
-            document.getElementById('start-btn').addEventListener('click', showAuthModal);
+            // FIX 1: If already logged in, scroll to games. Otherwise show auth modal.
+            document.getElementById('start-btn').addEventListener('click', function() {
+                if (currentUser && userProfile) {
+                    document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showAuthModal();
+                }
+            });
+
             document.getElementById('view-btn').addEventListener('click', function() {
                 document.getElementById('games-section').scrollIntoView({ behavior: 'smooth' });
             });
@@ -630,7 +669,13 @@
             document.getElementById('save-username-btn').addEventListener('click', saveUsername);
             document.getElementById('close-rps-btn').addEventListener('click', function() { closeGame('rps'); });
             document.getElementById('close-trivia-btn').addEventListener('click', function() { closeGame('trivia'); });
-            document.getElementById('close-funds-btn').addEventListener('click', function() { document.getElementById('funds-modal').classList.add('hidden'); });
+            document.getElementById('close-funds-btn').addEventListener('click', function() {
+                pendingGame = null;
+                document.getElementById('funds-modal').classList.add('hidden');
+            });
+            // FIX 2: Wire up test credits button
+            document.getElementById('test-credits-btn').addEventListener('click', addTestCredits);
+
             document.getElementById('rock-btn').addEventListener('click', function() { sendRPSMove('rock'); });
             document.getElementById('paper-btn').addEventListener('click', function() { sendRPSMove('paper'); });
             document.getElementById('scissors-btn').addEventListener('click', function() { sendRPSMove('scissors'); });
