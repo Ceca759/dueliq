@@ -522,7 +522,7 @@ async function deductWallet(amount) {
 
 async function addTestCredits() {
     if (!currentUser || !userProfile) return;
-    const newWallet = userProfile.wallet + 20;
+    const newWallet = parseFloat(userProfile.wallet) + 20;
     const r = await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
     if (r.error) { alert('Error: ' + r.error.message); return; }
     userProfile.wallet = newWallet;
