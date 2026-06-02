@@ -26,7 +26,11 @@
 
         @keyframes popIn { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
         .pop-in { animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-
+/* Profile modal */
+.profile-history-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #1e1d2e; font-size:13px; }
+.profile-history-row:last-child { border-bottom:none; }
+.badge-win { background:#052e16; color:#86efac; border:1px solid #166534; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:600; }
+.badge-loss { background:#1c0a0a; color:#fca5a5; border:1px solid #7f1d1d; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:600; }
         /* Rock smashes scissors */
         @keyframes rockSmash { 0%{transform:translateX(0) rotate(0)} 40%{transform:translateX(18px) rotate(-15deg)} 60%{transform:translateX(-4px) rotate(5deg)} 100%{transform:translateX(0) rotate(0)} }
         @keyframes scissorsCrushed { 0%{transform:scale(1) rotate(0)} 40%{transform:scale(0.7) rotate(20deg)} 100%{transform:scale(1) rotate(0)} }
@@ -411,7 +415,69 @@
         </button>
     </div>
 </div>
+<!-- Profile Modal -->
+<div id="profile-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.75);">
+    <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 shadow-2xl" style="background:#13121f; border:1px solid #2a2740; max-height:90vh; overflow-y:auto;">
+        <div class="p-8">
 
+            <!-- Header -->
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex items-center gap-4">
+                    <div id="profile-avatar" class="w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl font-bold flex-shrink-0" style="background:#7c3aed;"></div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="profile-username" class="text-xl font-bold"></span>
+                        </div>
+                        <div id="profile-since" class="text-xs mt-1" style="color:#4a4768;"></div>
+                    </div>
+                </div>
+                <button id="close-profile-btn" class="text-lg" style="color:#4a4768; background:none; border:none; cursor:pointer;">✕</button>
+            </div>
+
+            <!-- Wallet -->
+            <div class="flex items-center justify-between p-4 rounded-xl mb-5" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                <div>
+                    <div class="text-xs mb-1" style="color:#4a4768;">Wallet balance</div>
+                    <div id="profile-wallet" class="text-2xl font-bold" style="color:#a78bfa;"></div>
+                </div>
+                <button class="px-4 py-2 rounded-xl text-sm font-semibold" style="background:#7c3aed; color:white; opacity:0.45; cursor:not-allowed;">+ Deposit (soon)</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-3 mb-5">
+                <div class="text-center p-3 rounded-xl" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                    <div id="profile-stat-games" class="text-2xl font-bold">—</div>
+                    <div class="text-xs uppercase tracking-wide mt-1" style="color:#4a4768;">Games</div>
+                </div>
+                <div class="text-center p-3 rounded-xl" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                    <div id="profile-stat-wins" class="text-2xl font-bold" style="color:#22c55e;">—</div>
+                    <div class="text-xs uppercase tracking-wide mt-1" style="color:#4a4768;">Wins</div>
+                </div>
+                <div class="text-center p-3 rounded-xl" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                    <div id="profile-stat-losses" class="text-2xl font-bold" style="color:#ef4444;">—</div>
+                    <div class="text-xs uppercase tracking-wide mt-1" style="color:#4a4768;">Losses</div>
+                </div>
+            </div>
+
+            <!-- Match history -->
+            <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:#6b6888;">Recent matches</div>
+            <div id="profile-history" class="rounded-xl overflow-hidden mb-5" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                <div class="px-4 py-6 text-center text-sm" style="color:#4a4768;">Loading...</div>
+            </div>
+
+            <!-- Edit username -->
+            <div style="border-top:1px solid #1e1d2e; padding-top:16px;">
+                <div class="text-xs font-semibold uppercase tracking-wider mb-3" style="color:#6b6888;">Change username</div>
+                <div class="flex gap-2">
+                    <input type="text" id="new-username-input" placeholder="New username..." maxlength="20" class="flex-1 rounded-xl px-4 py-2.5 text-sm">
+                    <button id="save-new-username-btn" class="btn-primary px-4 py-2.5 rounded-xl text-sm font-semibold">Save</button>
+                </div>
+                <div id="username-change-msg" class="text-xs mt-2 hidden"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
 <script>
 // ─── Password protection ───────────────────────────────────────────────────
 const isDev = new URLSearchParams(window.location.search).has('dev');
@@ -446,7 +512,7 @@ function updateNav() {
             '<div class="flex items-center gap-2">' +
             '<div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:#1a1828;border:1px solid #2a2740;">' +
             '<div class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#7c3aed;">' + userProfile.username[0].toUpperCase() + '</div>' +
-            '<span class="text-sm font-medium">' + userProfile.username + '</span>' +
+            '<span class="text-sm font-medium" style="cursor:pointer; color:#a78bfa;" onclick="openProfileModal()">' + userProfile.username + '</span>' +
             '</div>' +
             '<button id="logout-btn" class="text-xs" style="color:#4a4768;">Logout</button>' +
             '</div>';
@@ -881,7 +947,95 @@ function animatePlayers() {
     document.getElementById('stat-players').textContent = onlinePlayers;
     setTimeout(animatePlayers, 3000);
 }
+// ─── Profile Modal ──────────────────────────────────────────────────────────
+async function openProfileModal() {
+    if (!currentUser || !userProfile) return;
 
+    // Fill static info
+    document.getElementById('profile-avatar').textContent = userProfile.username[0].toUpperCase();
+    document.getElementById('profile-username').textContent = userProfile.username;
+    document.getElementById('profile-wallet').textContent = '$' + parseFloat(userProfile.wallet).toFixed(2);
+
+    const since = new Date(currentUser.created_at);
+    document.getElementById('profile-since').textContent = 'Member since ' + since.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+    document.getElementById('profile-modal').classList.remove('hidden');
+    document.getElementById('username-change-msg').classList.add('hidden');
+    document.getElementById('new-username-input').value = '';
+
+    // Load match history for this user
+    const { data: matches } = await db.from('matches')
+        .select('*')
+        .or(`player1_id.eq.${currentUser.id},player2_id.eq.${currentUser.id}`)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+    if (!matches || matches.length === 0) {
+        document.getElementById('profile-stat-games').textContent = '0';
+        document.getElementById('profile-stat-wins').textContent = '0';
+        document.getElementById('profile-stat-losses').textContent = '0';
+        document.getElementById('profile-history').innerHTML = '<div class="px-4 py-6 text-center text-sm" style="color:#4a4768;">No matches yet. Go play!</div>';
+        return;
+    }
+
+    // Get opponent names
+    const oppIds = matches.map(m => m.player1_id === currentUser.id ? m.player2_id : m.player1_id);
+    const { data: profiles } = await db.from('profiles').select('id,username').in('id', [...new Set(oppIds)]);
+    const nameMap = {};
+    if (profiles) profiles.forEach(p => nameMap[p.id] = p.username);
+
+    // Stats
+    const wins = matches.filter(m => m.winner_id === currentUser.id).length;
+    const losses = matches.length - wins;
+    document.getElementById('profile-stat-games').textContent = matches.length;
+    document.getElementById('profile-stat-wins').textContent = wins;
+    document.getElementById('profile-stat-losses').textContent = losses;
+
+    // History rows
+    document.getElementById('profile-history').innerHTML = matches.map(m => {
+        const won = m.winner_id === currentUser.id;
+        const oppId = m.player1_id === currentUser.id ? m.player2_id : m.player1_id;
+        const oppName = nameMap[oppId] || 'Unknown';
+        const payout = won ? '+$' + parseFloat(m.payout).toFixed(2) : '-$' + parseFloat(m.entry_fee).toFixed(2);
+        const payoutColor = won ? '#22c55e' : '#ef4444';
+        return `<div class="profile-history-row">
+            <div class="flex items-center gap-2">
+                <span class="${won ? 'badge-win' : 'badge-loss'}">${won ? 'WIN' : 'LOSS'}</span>
+                <span style="color:#6b6888;">vs ${oppName}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span style="color:${payoutColor}; font-weight:600;">${payout}</span>
+                <span style="color:#4a4768; font-size:12px;">${getTimeAgo(new Date(m.created_at))}</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function saveNewUsername() {
+    const newName = document.getElementById('new-username-input').value.trim();
+    const msgEl = document.getElementById('username-change-msg');
+    if (!newName) return;
+
+    const { error } = await db.from('profiles').update({ username: newName }).eq('id', currentUser.id);
+    if (error) {
+        if (error.code === '23505') { msgEl.textContent = 'Username taken, try another.'; msgEl.style.color = '#ef4444'; }
+        else { msgEl.textContent = 'Error saving. Try again.'; msgEl.style.color = '#ef4444'; }
+        msgEl.classList.remove('hidden');
+        return;
+    }
+
+    userProfile.username = newName;
+    document.getElementById('profile-avatar').textContent = newName[0].toUpperCase();
+    document.getElementById('profile-username').textContent = newName;
+    msgEl.textContent = 'Username updated!';
+    msgEl.style.color = '#22c55e';
+    msgEl.classList.remove('hidden');
+    document.getElementById('new-username-input').value = '';
+    updateNav();
+}
+
+document.getElementById('close-profile-btn').addEventListener('click', () => document.getElementById('profile-modal').classList.add('hidden'));
+document.getElementById('save-new-username-btn').addEventListener('click', saveNewUsername);
 // ─── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     initSupabase();
