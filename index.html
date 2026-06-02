@@ -479,6 +479,7 @@ async function handleSession(session) {
         document.getElementById('username-modal').classList.remove('hidden');
     } else {
         userProfile = r.data;
+        userProfile.wallet = parseFloat(userProfile.wallet) || 0;
         closeAuthModal();
         updateNav();
         connectWebSocket();
@@ -625,7 +626,7 @@ async function confirmCreateGame() {
     const fee = parseFloat(document.getElementById('fee-input').value);
     if (!fee || fee < 1) { alert('Minimum entry fee is $1'); return; }
 
-    if (userProfile.wallet < fee) {
+    if (parseFloat(userProfile.wallet) < fee) {
         pendingFee = fee;
         document.getElementById('create-modal').classList.add('hidden');
         document.getElementById('funds-needed').textContent = '$' + fee.toFixed(2);
@@ -667,7 +668,7 @@ async function cancelMyGame() {
 async function joinGame(gameId, fee) {
     if (!currentUser || !userProfile) { showAuthModal(); return; }
 
-    if (userProfile.wallet < fee) {
+    if (parseFloat(userProfile.wallet) < fee) {
         pendingFee = null;
         document.getElementById('funds-needed').textContent = '$' + fee.toFixed(2);
         document.getElementById('funds-balance').textContent = '$' + userProfile.wallet.toFixed(2);
