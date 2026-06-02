@@ -727,7 +727,6 @@ function sendMove(move) {
     document.querySelectorAll('.move-btn').forEach(b => {
         if (b.dataset.move === move) b.classList.add('selected');
     });
-    b.disabled = false; // keep it visually selected but locked
     setRPSResult('✅ Move locked in! Waiting for opponent...', '#4a4768');
     wsSend({ action: 'move', move, game_id: activeGameId });
 }
