@@ -927,11 +927,12 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('leave-rps-btn').addEventListener('click', closeRPS);
 
     // Auth state
-    db.auth.getSession().then(r => {
-        handleSession(r.data.session);
-        loadLeaderboard();
-    });
-    db.auth.onAuthStateChange((event, session) => handleSession(session));
+db.auth.onAuthStateChange((event, session) => {
+    handleSession(session);
+});
+db.auth.getSession().then(r => {
+    handleSession(r.data.session);
+    loadLeaderboard();
 });
 </script>
 </body>
