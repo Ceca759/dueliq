@@ -11,7 +11,25 @@ SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ubrfipncygmigbgqhwal.supa
 SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
 
 HOUSE_CUT = 0.15  # 15%
+import random
 
+WORD_LIST = [
+    "apple","bridge","cloud","dance","eagle","flame","grape","house","island","jungle",
+    "knife","lemon","magic","night","ocean","piano","queen","river","stone","tiger",
+    "umbra","vault","wheat","xenon","yacht","zebra","amber","blaze","crisp","drift",
+    "ember","frost","gloom","haste","ivory","joust","knack","lunar","marsh","noble",
+    "olive","prism","quest","roast","scorn","thorn","ultra","vivid","waltz","exact",
+    "youth","zonal","acorn","bloom","chess","depot","exile","fable","gaunt","haven",
+    "input","joker","karma","latch","mirth","notch","orbit","perch","quirk","realm",
+    "swift","truce","untie","visor","wrath","expel","yearn","zesty","aloft","brisk",
+    "clasp","drone","elbow","fiend","gruel","hoist","inept","jamb","kinky","lodge",
+    "manga","nadir","optic","plank","quill","raven","smirk","talon","usurp","vapor"
+]
+
+def get_word_list():
+    words = WORD_LIST.copy()
+    random.shuffle(words)
+    return words
 async def record_match(player1_id, player2_id, winner_id, game, entry_fee, payout):
     if not SUPABASE_KEY:
         print("[Supabase] No SUPABASE_KEY set, skipping match record")
@@ -68,12 +86,11 @@ def lobby_snapshot():
             "game_id": gid,
             "creator": g["creator_name"],
             "entry_fee": g["entry_fee"],
+            "game_type": g.get("game_type", "rps"),
             "created_at": g["created_at"]
         })
-    # Sort newest first
     games.sort(key=lambda x: x["created_at"], reverse=True)
     return games
-
 async def broadcast_lobby():
     """Send updated lobby to all connected clients."""
     if not connected_clients:
@@ -105,12 +122,13 @@ async def handler(websocket):
 
                 game_id = str(uuid.uuid4())[:8]
                 open_games[game_id] = {
-                    "creator_ws": websocket,
-                    "creator_id": data.get("user_id"),
-                    "creator_name": data.get("username"),
-                    "entry_fee": entry_fee,
-                    "created_at": datetime.utcnow().isoformat()
-                }
+    "creator_ws": websocket,
+    "creator_id": data.get("user_id"),
+    "creator_name": data.get("username"),
+    "entry_fee": entry_fee,
+    "game_type": data.get("game_type", "rps"),
+    "created_at": datetime.utcnow().isoformat()
+}
                 ws_to_game[websocket] = game_id
 
                 await websocket.send(json.dumps({
@@ -162,24 +180,102 @@ async def handler(websocket):
                 ws_to_game[creator_ws] = game_id
                 ws_to_game[websocket] = game_id
 
-                matched_msg_p1 = json.dumps({
-                    "type": "match_started",
-                    "game_id": game_id,
-                    "opponent": data.get("username"),
-                    "entry_fee": game["entry_fee"]
-                })
-                matched_msg_p2 = json.dumps({
-                    "type": "match_started",
-                    "game_id": game_id,
-                    "opponent": game["creator_name"],
-                    "entry_fee": game["entry_fee"]
-                })
+               game_type = game.get("game_type", "rps")
+words = get_word_list() if game_type == "typing" else []
+
+active_matches[game_id]["game_type"] = game_type
+active_matches[game_id]["words"] = words
+active_matches[game_id]["p1_word_count"] = 0
+active_matches[game_id]["p2_word_count"] = 0
+active_matches[game_id]["timer_task"] = None
+
+matched_msg_p1 = json.dumps({
+    "type": "match_started",
+    "game_id": game_id,
+    "opponent": data.get("username"),
+    "entry_fee": game["entry_fee"],
+    "game_type": game_type,
+    "words": words
+})
+matched_msg_p2 = json.dumps({
+    "type": "match_started",
+    "game_id": game_id,
+    "opponent": game["creator_name"],
+    "entry_fee": game["entry_fee"],
+    "game_type": game_type,
+    "words": words
+})
 
                 await creator_ws.send(matched_msg_p1)
                 await websocket.send(matched_msg_p2)
                 await broadcast_lobby()
                 print(f"[Match] Started: {game_id} {game['creator_name']} vs {data.get('username')} for ${game['entry_fee']}")
+# ── Typing word submitted ──────────────────────────────────────────────────
+elif action == "typing_word":
+    game_id = ws_to_game.get(websocket)
+    if not game_id or game_id not in active_matches:
+        continue
+    match = active_matches[game_id]
+    if match.get("game_type") != "typing":
+        continue
+    is_p1 = (websocket == match["p1_ws"])
+    if is_p1:
+        match["p1_word_count"] += 1
+        count = match["p1_word_count"]
+    else:
+        match["p2_word_count"] += 1
+        count = match["p2_word_count"]
+    opp_ws = match["p2_ws"] if is_p1 else match["p1_ws"]
+    if is_open(opp_ws):
+        await opp_ws.send(json.dumps({
+            "type": "opp_word_count",
+            "count": match["p1_word_count"] if not is_p1 else match["p2_word_count"]
+        }))
 
+# ── Start typing timer ─────────────────────────────────────────────────────
+elif action == "typing_start":
+    game_id = ws_to_game.get(websocket)
+    if not game_id or game_id not in active_matches:
+        continue
+    match = active_matches[game_id]
+    if match.get("timer_started"):
+        continue
+    match["timer_started"] = True
+    async def end_typing_match(gid):
+        await asyncio.sleep(60)
+        if gid not in active_matches:
+            return
+        m = active_matches.pop(gid)
+        p1_count = m["p1_word_count"]
+        p2_count = m["p2_word_count"]
+        pot = m["entry_fee"] * 2
+        payout = round(pot * (1 - HOUSE_CUT), 2)
+        if p1_count > p2_count:
+            winner_ws, loser_ws = m["p1_ws"], m["p2_ws"]
+            winner_id, loser_id = m["p1_id"], m["p2_id"]
+            w_score, l_score = p1_count, p2_count
+        elif p2_count > p1_count:
+            winner_ws, loser_ws = m["p2_ws"], m["p1_ws"]
+            winner_id, loser_id = m["p2_id"], m["p1_id"]
+            w_score, l_score = p2_count, p1_count
+        else:
+            # Tie — refund both (no house cut)
+            refund = round(pot / 2, 2)
+            for ws_ in [m["p1_ws"], m["p2_ws"]]:
+                if is_open(ws_):
+                    await ws_.send(json.dumps({"type": "typing_over", "won": None, "payout": refund, "your_score": p1_count, "opp_score": p2_count}))
+            ws_to_game.pop(m["p1_ws"], None)
+            ws_to_game.pop(m["p2_ws"], None)
+            return
+        if is_open(winner_ws):
+            await winner_ws.send(json.dumps({"type": "typing_over", "won": True, "payout": payout, "your_score": w_score, "opp_score": l_score}))
+        if is_open(loser_ws):
+            await loser_ws.send(json.dumps({"type": "typing_over", "won": False, "payout": 0, "your_score": l_score, "opp_score": w_score}))
+        await record_match(winner_id, loser_id, winner_id, "typing", m["entry_fee"], payout)
+        ws_to_game.pop(m["p1_ws"], None)
+        ws_to_game.pop(m["p2_ws"], None)
+        print(f"[Typing] Over: {gid} winner={winner_id} payout=${payout}")
+    asyncio.create_task(end_typing_match(game_id))
             # ── Send RPS move ──────────────────────────────────────────
             elif action == "move":
                 game_id = ws_to_game.get(websocket)
