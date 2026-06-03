@@ -98,6 +98,10 @@
         .fee-mid { background: #1e3a5f; color: #93c5fd; }
         .fee-high { background: #3b1f6e; color: #c4b5fd; }
         .fee-whale { background: #7f1d1d; color: #fca5a5; }
+@keyframes wordCorrect { 0%{transform:scale(1)} 50%{transform:scale(1.12)} 100%{transform:scale(1)} }
+.word-correct { animation: wordCorrect 0.25s ease; color: #22c55e !important; }
+@keyframes inputShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+.input-shake { animation: inputShake 0.3s ease; border-color: #ef4444 !important; }
     </style>
 </head>
 <body>
@@ -314,6 +318,16 @@
     <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
         <h3 class="text-xl font-bold mb-1">Create a Game</h3>
         <p class="text-sm mb-6" style="color:#6b6888;">Set your entry fee. Opponent matches it.</p>
+<label class="text-sm font-medium mb-2 block" style="color:#a78bfa;">Game</label>
+<div class="flex gap-2 mb-5">
+    <button class="game-type-btn flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2" data-type="rps" style="background:#1a1535; border:2px solid #7c3aed; color:#a78bfa;">
+        ✊ Rock Paper Scissors
+    </button>
+    <button class="game-type-btn flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2" data-type="typing" style="background:#1a1828; border:1px solid #2a2740; color:#6b6888;">
+        ⌨️ Typing Race
+    </button>
+</div>
+<input type="hidden" id="game-type-select" value="rps">
         <label class="text-sm font-medium mb-2 block" style="color:#a78bfa;">Entry Fee (min $1)</label>
         <div class="relative mb-4">
             <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold" style="color:#6b6888;">$</span>
@@ -478,6 +492,51 @@
         </div>
     </div>
 </div>
+<!-- Typing Race Modal -->
+<div id="typing-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.85);">
+    <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
+
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <h3 class="text-xl font-bold">Typing Race</h3>
+                <p id="typing-subtitle" class="text-sm mt-0.5" style="color:#6b6888;">Best of 60 seconds</p>
+            </div>
+            <div class="text-right">
+                <div class="text-xs mb-1" style="color:#4a4768;">TIME LEFT</div>
+                <div id="typing-timer" class="text-3xl font-bold" style="color:#a78bfa; font-variant-numeric:tabular-nums;">1:00</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <div class="p-3 rounded-xl text-center" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                <div class="text-xs uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
+                <div id="typing-my-count" class="text-2xl font-bold" style="color:#22c55e;">0 <span class="text-sm font-normal" style="color:#4a4768;">words</span></div>
+            </div>
+            <div class="p-3 rounded-xl text-center" style="background:#0d0c18; border:1px solid #1e1d2e;">
+                <div id="typing-opp-label" class="text-xs uppercase tracking-wide mb-1" style="color:#4a4768;">Opponent</div>
+                <div id="typing-opp-count" class="text-2xl font-bold">0 <span class="text-sm font-normal" style="color:#4a4768;">words</span></div>
+            </div>
+        </div>
+
+        <div class="rounded-2xl p-6 text-center mb-4" style="background:#0d0c18; border:1px solid #1e1d2e;">
+            <div class="text-xs uppercase tracking-wide mb-3" style="color:#4a4768;">Type this word</div>
+            <div id="typing-word" class="text-5xl font-bold mb-3" style="color:#a78bfa; font-family:monospace; letter-spacing:3px;"></div>
+            <div id="typing-dots" class="flex justify-center gap-1.5 mb-2"></div>
+            <div id="typing-letter-hint" class="text-xs" style="color:#4a4768;"></div>
+        </div>
+
+        <input type="text" id="typing-input" placeholder="Type here and press Enter..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            class="w-full rounded-xl px-4 py-3.5 text-center text-lg font-mono mb-3"
+            style="letter-spacing:2px;">
+
+        <div id="typing-result" class="hidden result-banner mb-3" style="background:#0d0c18; border:1px solid #1e1d2e;"></div>
+
+        <div class="flex justify-between items-center">
+            <div id="typing-word-count" class="text-xs" style="color:#4a4768;">Waiting for match...</div>
+            <button id="leave-typing-btn" class="text-xs py-1.5 px-3 rounded-lg" style="border:1px solid #1e1d2e; color:#4a4768; background:transparent;">Leave</button>
+        </div>
+    </div>
+</div>
 <script>
 // ─── Password protection ───────────────────────────────────────────────────
 const isDev = new URLSearchParams(window.location.search).has('dev');
@@ -618,7 +677,12 @@ function handleMessage(data) {
     if (data.type === 'lobby_update') renderLobby(data.games);
     else if (data.type === 'game_created') onGameCreated(data);
     else if (data.type === 'game_cancelled') onGameCancelled(data);
-    else if (data.type === 'match_started') onMatchStarted(data);
+    else if (data.type === 'match_started') {
+    if (data.game_type === 'typing') onMatchStartedTyping(data);
+    else onMatchStarted(data);
+}
+else if (data.type === 'opp_word_count') onOppWordCount(data);
+else if (data.type === 'typing_over') onTypingOver(data);
     else if (data.type === 'opponent_moved') onOpponentMoved();
     else if (data.type === 'round_result') onRoundResult(data);
     else if (data.type === 'match_over') onMatchOver(data);
@@ -660,7 +724,7 @@ function renderLobby(games) {
             <div class="text-right">
                 ${isMyGame
                     ? '<span class="text-xs" style="color:#4a4768;">Waiting...</span>'
-                    : `<button class="join-btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold" data-id="${g.game_id}" data-fee="${g.entry_fee}">Join</button>`
+                    : `<button class="join-btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold" data-id="${g.game_id}" data-fee="${g.entry_fee}" data-type="${g.game_type || 'rps'}">Join</button>`_fee}">Join</button>`
                 }
             </div>
         </div>`;
@@ -668,6 +732,8 @@ function renderLobby(games) {
 
     // Wire up join buttons
     document.querySelectorAll('.join-btn').forEach(btn => {
+    btn.addEventListener('click', () => joinGame(btn.dataset.id, parseFloat(btn.dataset.fee)));
+});
         btn.addEventListener('click', () => joinGame(btn.dataset.id, parseFloat(btn.dataset.fee)));
     });
 }
@@ -703,7 +769,8 @@ async function confirmCreateGame() {
 
     document.getElementById('create-modal').classList.add('hidden');
     await deductWallet(fee);
-    wsSend({ action: 'create_game', entry_fee: fee, user_id: currentUser.id, username: userProfile.username });
+    const gameType = document.getElementById('game-type-select') ? document.getElementById('game-type-select').value : 'rps';
+wsSend({ action: 'create_game', entry_fee: fee, user_id: currentUser.id, username: userProfile.username, game_type: gameType });
 }
 
 function onGameCreated(data) {
@@ -1036,6 +1103,196 @@ async function saveNewUsername() {
 
 document.getElementById('close-profile-btn').addEventListener('click', () => document.getElementById('profile-modal').classList.add('hidden'));
 document.getElementById('save-new-username-btn').addEventListener('click', saveNewUsername);
+// ─── Audio ─────────────────────────────────────────────────────────────────
+function playBeep(correct) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (correct) {
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1100, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+            osc.start(); osc.stop(ctx.currentTime + 0.2);
+        } else {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(200, ctx.currentTime);
+            gain.gain.setValueAtTime(0.2, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+            osc.start(); osc.stop(ctx.currentTime + 0.15);
+        }
+    } catch(e) {}
+}
+
+// ─── Typing Race ────────────────────────────────────────────────────────────
+let typingWords = [];
+let typingIndex = 0;
+let typingMyCount = 0;
+let typingOppCount = 0;
+let typingGameId = null;
+let typingTimerInterval = null;
+let typingSecondsLeft = 60;
+let typingStarted = false;
+
+function onMatchStartedTyping(data) {
+    typingWords = data.words;
+    typingIndex = 0;
+    typingMyCount = 0;
+    typingOppCount = 0;
+    typingGameId = data.game_id;
+    typingSecondsLeft = 60;
+    typingStarted = false;
+    activeGameId = data.game_id;
+
+    document.getElementById('typing-subtitle').textContent = '60 seconds · vs ' + data.opponent;
+    document.getElementById('typing-opp-label').textContent = data.opponent;
+    document.getElementById('typing-my-count').innerHTML = '0 <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
+    document.getElementById('typing-opp-count').innerHTML = '0 <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
+    document.getElementById('typing-timer').textContent = '1:00';
+    document.getElementById('typing-result').classList.add('hidden');
+    document.getElementById('typing-input').value = '';
+    document.getElementById('typing-input').disabled = false;
+    document.getElementById('typing-word-count').textContent = 'Word 1 · type to start!';
+
+    showTypingWord();
+    document.getElementById('typing-modal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('typing-input').focus(), 100);
+}
+
+function showTypingWord() {
+    const word = typingWords[typingIndex % typingWords.length];
+    const wordEl = document.getElementById('typing-word');
+    wordEl.textContent = word;
+    wordEl.style.color = '#a78bfa';
+    wordEl.classList.remove('word-correct');
+
+    // Letter dots
+    const dots = document.getElementById('typing-dots');
+    dots.innerHTML = word.split('').map(() =>
+        '<div style="width:7px;height:7px;border-radius:50%;background:#1e1d2e;"></div>'
+    ).join('');
+    document.getElementById('typing-letter-hint').textContent = '';
+    document.getElementById('typing-input').value = '';
+}
+
+function updateLetterDots(typed, word) {
+    const dots = document.getElementById('typing-dots').children;
+    for (let i = 0; i < word.length; i++) {
+        if (i < typed.length) {
+            dots[i].style.background = typed[i] === word[i] ? '#22c55e' : '#ef4444';
+        } else {
+            dots[i].style.background = '#1e1d2e';
+        }
+    }
+    const hint = typed.length + ' of ' + word.length + ' letters';
+    document.getElementById('typing-letter-hint').textContent = hint;
+}
+
+function startTypingTimer() {
+    if (typingStarted) return;
+    typingStarted = true;
+    wsSend({ action: 'typing_start', game_id: typingGameId });
+    typingTimerInterval = setInterval(() => {
+        typingSecondsLeft--;
+        const m = Math.floor(typingSecondsLeft / 60);
+        const s = typingSecondsLeft % 60;
+        document.getElementById('typing-timer').textContent = m + ':' + String(s).padStart(2, '0');
+        if (typingSecondsLeft <= 10) {
+            document.getElementById('typing-timer').style.color = '#ef4444';
+        }
+        if (typingSecondsLeft <= 0) {
+            clearInterval(typingTimerInterval);
+            document.getElementById('typing-input').disabled = true;
+        }
+    }, 1000);
+}
+
+function handleTypingInput(e) {
+    if (!typingGameId) return;
+    const input = document.getElementById('typing-input');
+    const typed = input.value;
+    const word = typingWords[typingIndex % typingWords.length];
+
+    if (!typingStarted && typed.length > 0) startTypingTimer();
+
+    // Submit on Enter or Space
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        const attempt = typed.trim();
+        if (attempt === word) {
+            // Correct!
+            playBeep(true);
+            const wordEl = document.getElementById('typing-word');
+            wordEl.style.color = '#22c55e';
+            wordEl.classList.add('word-correct');
+            typingMyCount++;
+            typingIndex++;
+            document.getElementById('typing-my-count').innerHTML = typingMyCount + ' <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
+            document.getElementById('typing-word-count').textContent = 'Word ' + (typingIndex + 1);
+            wsSend({ action: 'typing_word', game_id: typingGameId });
+            setTimeout(() => showTypingWord(), 300);
+        } else {
+            // Wrong
+            playBeep(false);
+            input.classList.add('input-shake');
+            input.style.borderColor = '#ef4444';
+            setTimeout(() => {
+                input.classList.remove('input-shake');
+                input.style.borderColor = '';
+                input.value = '';
+            }, 350);
+        }
+        return;
+    }
+
+    updateLetterDots(typed, word);
+}
+
+function onOppWordCount(data) {
+    typingOppCount = data.count;
+    document.getElementById('typing-opp-count').innerHTML = typingOppCount + ' <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
+}
+
+function onTypingOver(data) {
+    clearInterval(typingTimerInterval);
+    activeGameId = null;
+    typingGameId = null;
+    document.getElementById('typing-input').disabled = true;
+    document.getElementById('typing-timer').textContent = '0:00';
+
+    const resultEl = document.getElementById('typing-result');
+    resultEl.classList.remove('hidden');
+
+    if (data.won === true) {
+        addWinnings(data.payout);
+        resultEl.innerHTML = '🎉 You won! ' + data.your_score + ' vs ' + data.opp_score + ' words. +$' + data.payout.toFixed(2) + ' added!';
+        resultEl.style.color = '#22c55e';
+        resultEl.style.background = '#052e16';
+        resultEl.style.border = '1px solid #166534';
+    } else if (data.won === false) {
+        resultEl.innerHTML = '😔 You lost! ' + data.your_score + ' vs ' + data.opp_score + ' words. Better luck next time!';
+        resultEl.style.color = '#ef4444';
+        resultEl.style.background = '#1c0a0a';
+        resultEl.style.border = '1px solid #7f1d1d';
+    } else {
+        addWinnings(data.payout);
+        resultEl.innerHTML = "🤝 Tie! Both typed " + data.your_score + " words. Refunded $" + data.payout.toFixed(2);
+        resultEl.style.color = '#f59e0b';
+        resultEl.style.background = '#1c1200';
+        resultEl.style.border = '1px solid #92400e';
+    }
+    loadLeaderboard();
+}
+
+function closeTyping() {
+    clearInterval(typingTimerInterval);
+    document.getElementById('typing-modal').classList.add('hidden');
+    activeGameId = null;
+    typingGameId = null;
+}
 // ─── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     initSupabase();
@@ -1079,7 +1336,34 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', () => sendMove(btn.dataset.move));
     });
     document.getElementById('leave-rps-btn').addEventListener('click', closeRPS);
+document.getElementById('typing-input').addEventListener('keydown', handleTypingInput);
+document.getElementById('typing-input').addEventListener('input', (e) => {
+    const typed = document.getElementById('typing-input').value;
+    const word = typingWords[typingIndex % typingWords.length];
+    if (word) updateLetterDots(typed, word);
+});
+document.getElementById('leave-typing-btn').addEventListener('click', closeTyping);
 
+document.querySelectorAll('.game-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('game-type-select').value = btn.dataset.type;
+        document.querySelectorAll('.game-type-btn').forEach(b => {
+            b.style.background = '#1a1828';
+            b.style.border = '1px solid #2a2740';
+            b.style.color = '#6b6888';
+        });
+        btn.style.background = '#1a1535';
+        btn.style.border = '2px solid #7c3aed';
+        btn.style.color = '#a78bfa';
+    });
+});
+document.getElementById('typing-input').addEventListener('keydown', handleTypingInput);
+document.getElementById('typing-input').addEventListener('input', (e) => {
+    const typed = document.getElementById('typing-input').value;
+    const word = typingWords[typingIndex % typingWords.length];
+    if (word) updateLetterDots(typed, word);
+});
+document.getElementById('leave-typing-btn').addEventListener('click', closeTyping);
     // Auth state
 db.auth.onAuthStateChange((event, session) => {
     handleSession(session);
