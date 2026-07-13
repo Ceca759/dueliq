@@ -1016,6 +1016,26 @@ function getTimeAgo(date) {
     return Math.floor(s/86400) + 'd ago';
 }
 function startCountdown() {
+    setMoveButtons(false);
+    document.getElementById('move-display').classList.add('hidden');
+    let count = 3;
+    const el = document.getElementById('rps-result');
+    el.style.background = '#0d0c18';
+    el.style.border = '1px solid #1e1d2e';
+    const tick = () => {
+        if (count > 0) {
+            el.innerHTML = '<span style="font-size:2rem;font-weight:700;color:#a78bfa;">' + count + '</span>';
+            el.style.color = '#a78bfa';
+            count--;
+            setTimeout(tick, 1000);
+        } else {
+            el.innerHTML = '<span style="font-size:1.5rem;font-weight:700;color:#22c55e;">GO! 🎯</span>';
+            setTimeout(() => setMoveButtons(true), 500);
+        }
+    };
+    tick();
+}
+function startCountdown() {
 let roundTimerInterval = null;
 function startRoundTimer(seconds) {
     clearInterval(roundTimerInterval);
