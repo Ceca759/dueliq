@@ -1344,28 +1344,20 @@ document.addEventListener('DOMContentLoaded', function() {
     initSupabase();
     animatePlayers();
 
-    // Nav
+// Nav
     document.getElementById('start-btn').addEventListener('click', () => {
-document.getElementById('rematch-btn').addEventListener('click', () => {
-    document.getElementById('rematch-btn').classList.add('hidden');
-    openCreateModal(currentEntryFee);
-    closeRPS();
-});
         if (currentUser && userProfile) openCreateModal();
         else showAuthModal();
     });
-
     // Auth
     document.getElementById('google-btn').addEventListener('click', signInWithGoogle);
     document.getElementById('cancel-auth-btn').addEventListener('click', closeAuthModal);
     document.getElementById('save-username-btn').addEventListener('click', saveUsername);
-
     // Create game
     document.getElementById('create-game-btn').addEventListener('click', () => openCreateModal());
     document.getElementById('confirm-create-btn').addEventListener('click', confirmCreateGame);
     document.getElementById('cancel-create-btn').addEventListener('click', () => document.getElementById('create-modal').classList.add('hidden'));
     document.getElementById('cancel-game-btn').addEventListener('click', cancelMyGame);
-
     // Fee presets
     document.querySelectorAll('.fee-preset').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1374,56 +1366,50 @@ document.getElementById('rematch-btn').addEventListener('click', () => {
         });
     });
     document.getElementById('fee-input').addEventListener('input', updatePotPreview);
-
     // Funds modal
     document.getElementById('test-credits-btn').addEventListener('click', addTestCredits);
     document.getElementById('close-funds-btn').addEventListener('click', () => {
         pendingFee = null;
         document.getElementById('funds-modal').classList.add('hidden');
     });
-
     // RPS moves
     document.querySelectorAll('.move-btn').forEach(btn => {
         btn.addEventListener('click', () => sendMove(btn.dataset.move));
     });
     document.getElementById('leave-rps-btn').addEventListener('click', closeRPS);
-document.getElementById('typing-input').addEventListener('keydown', handleTypingInput);
-document.getElementById('typing-input').addEventListener('input', (e) => {
-    const typed = document.getElementById('typing-input').value;
-    const word = typingWords[typingIndex % typingWords.length];
-    if (word) updateLetterDots(typed, word);
-});
-document.getElementById('leave-typing-btn').addEventListener('click', closeTyping);
-
-document.querySelectorAll('.game-type-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.getElementById('game-type-select').value = btn.dataset.type;
-        document.querySelectorAll('.game-type-btn').forEach(b => {
-            b.style.background = '#1a1828';
-            b.style.border = '1px solid #2a2740';
-            b.style.color = '#6b6888';
+    document.getElementById('rematch-btn').addEventListener('click', () => {
+        document.getElementById('rematch-btn').classList.add('hidden');
+        openCreateModal(currentEntryFee);
+        closeRPS();
+    });
+    document.getElementById('typing-input').addEventListener('keydown', handleTypingInput);
+    document.getElementById('typing-input').addEventListener('input', (e) => {
+        const typed = document.getElementById('typing-input').value;
+        const word = typingWords[typingIndex % typingWords.length];
+        if (word) updateLetterDots(typed, word);
+    });
+    document.getElementById('leave-typing-btn').addEventListener('click', closeTyping);
+    document.getElementById('typing-input').addEventListener('paste', e => e.preventDefault());
+    document.querySelectorAll('.game-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('game-type-select').value = btn.dataset.type;
+            document.querySelectorAll('.game-type-btn').forEach(b => {
+                b.style.background = '#1a1828';
+                b.style.border = '1px solid #2a2740';
+                b.style.color = '#6b6888';
+            });
+            btn.style.background = '#1a1535';
+            btn.style.border = '2px solid #7c3aed';
+            btn.style.color = '#a78bfa';
         });
-        btn.style.background = '#1a1535';
-        btn.style.border = '2px solid #7c3aed';
-        btn.style.color = '#a78bfa';
+    });
+    // Auth state
+    db.auth.onAuthStateChange((event, session) => {
+        handleSession(session);
+    });
+    db.auth.getSession().then(r => {
+        handleSession(r.data.session);
+        loadLeaderboard();
     });
 });
-document.getElementById('typing-input').addEventListener('keydown', handleTypingInput);
-document.getElementById('typing-input').addEventListener('input', (e) => {
-    const typed = document.getElementById('typing-input').value;
-    const word = typingWords[typingIndex % typingWords.length];
-    if (word) updateLetterDots(typed, word);
-});
-document.getElementById('leave-typing-btn').addEventListener('click', closeTyping);
-    // Auth state
-db.auth.onAuthStateChange((event, session) => {
-    handleSession(session);
-});
-db.auth.getSession().then(r => {
-    handleSession(r.data.session);
-    loadLeaderboard();
-});
-});
 </script>
-</body>
-</html>
