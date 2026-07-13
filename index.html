@@ -839,8 +839,8 @@ function onMatchStarted(data) {
     document.getElementById('rps-pot').textContent = '$' + (data.entry_fee * 2).toFixed(2);
     document.getElementById('rps-subtitle').textContent = 'Best of 3 · vs ' + data.opponent;
     document.getElementById('move-display').classList.add('hidden');
-    setRPSResult('⚔️ Match found! Get ready...', '#a78bfa');
-    setMoveButtons(false);
+    setRPSResult('⚔️ Match found! Make your move.', '#a78bfa');
+    setMoveButtons(true);
     document.getElementById('rps-modal').classList.remove('hidden');
 }
 
@@ -885,9 +885,11 @@ function getMatchupAnim(winner, loser) {
     return ['', ''];
 }
 
-function onRoundResult(data) {
+function onRoundResult(data) {function onRoundResult(data) {
     clearInterval(roundTimerInterval);
     document.getElementById('rps-subtitle').style.color = '#6b6888';
+    myMoveChosen = null;
+    myScore = data.your_score;
     myMoveChosen = null;
     myScore = data.your_score;
     oppScore = data.opp_score;
@@ -1033,6 +1035,7 @@ function startCountdown() {
     };
     tick();
 }
+function startCountdown() {
 let roundTimerInterval = null;
 function startRoundTimer(seconds) {
     clearInterval(roundTimerInterval);
@@ -1049,6 +1052,25 @@ function startRoundTimer(seconds) {
             subtitle.textContent = 'Time\'s up!';
         }
     }, 1000);
+}
+    setMoveButtons(false);
+    document.getElementById('move-display').classList.add('hidden');
+    let count = 3;
+    const el = document.getElementById('rps-result');
+    el.style.background = '#0d0c18';
+    el.style.border = '1px solid #1e1d2e';
+    const tick = () => {
+        if (count > 0) {
+            el.innerHTML = `<span style="font-size:2rem;font-weight:700;color:#a78bfa;">${count}</span>`;
+            el.style.color = '#a78bfa';
+            count--;
+            setTimeout(tick, 1000);
+        } else {
+            el.innerHTML = `<span style="font-size:1.5rem;font-weight:700;color:#22c55e;">GO! 🎯</span>`;
+            setTimeout(() => setMoveButtons(true), 500);
+        }
+    };
+    tick();
 }
 // ─── Player count animation ─────────────────────────────────────────────────
 function animatePlayers() {
