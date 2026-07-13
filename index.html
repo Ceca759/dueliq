@@ -685,6 +685,7 @@ else if (data.type === 'opp_word_count') onOppWordCount(data);
 else if (data.type === 'typing_over') onTypingOver(data);
     else if (data.type === 'opponent_moved') onOpponentMoved();
 else if (data.type === 'countdown') startCountdown();
+else if (data.type === 'round_timer') startRoundTimer(data.seconds);
     else if (data.type === 'round_result') onRoundResult(data);
     else if (data.type === 'match_over') onMatchOver(data);
     else if (data.type === 'opponent_disconnected') onOpponentDisconnected(data);
@@ -881,7 +882,11 @@ function getMatchupAnim(winner, loser) {
     return ['', ''];
 }
 
-function onRoundResult(data) {
+function onRoundResult(data) {function onRoundResult(data) {
+    clearInterval(roundTimerInterval);
+    document.getElementById('rps-subtitle').style.color = '#6b6888';
+    myMoveChosen = null;
+    myScore = data.your_score;
     myMoveChosen = null;
     myScore = data.your_score;
     oppScore = data.opp_score;
@@ -1007,6 +1012,23 @@ function getTimeAgo(date) {
     return Math.floor(s/86400) + 'd ago';
 }
 function startCountdown() {
+let roundTimerInterval = null;
+function startRoundTimer(seconds) {
+    clearInterval(roundTimerInterval);
+    const subtitle = document.getElementById('rps-subtitle');
+    let left = seconds;
+    subtitle.textContent = `Pick your move! ${left}s`;
+    subtitle.style.color = '#f59e0b';
+    roundTimerInterval = setInterval(() => {
+        left--;
+        subtitle.textContent = `Pick your move! ${left}s`;
+        if (left <= 3) subtitle.style.color = '#ef4444';
+        if (left <= 0) {
+            clearInterval(roundTimerInterval);
+            subtitle.textContent = 'Time\'s up!';
+        }
+    }, 1000);
+}
     setMoveButtons(false);
     document.getElementById('move-display').classList.add('hidden');
     let count = 3;

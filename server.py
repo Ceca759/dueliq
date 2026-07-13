@@ -303,6 +303,43 @@ elif action == "typing_start":
         if is_open(ws_):
             await ws_.send(json.dumps({"type": "countdown"}))
     await asyncio.sleep(3)
+    # Start 10 second move timer
+    match["round_deadline"] = datetime.utcnow().timestamp() + 10
+    for ws_ in [match["p1_ws"], match["p2_ws"]]:
+        if is_open(ws_):
+            await ws_.send(json.dumps({"type": "round_timer", "seconds": 10}))
+    async def check_timeout(gid, deadline):
+        await asyncio.sleep(10)
+        if gid not in active_matches:
+            return
+        m = active_matches[gid]
+        if datetime.utcnow().timestamp() < deadline + 0.5:
+            return
+        # whoever didn't move loses the round
+        p1_moved = "p1" in m["moves"]
+        p2_moved = "p2" in m["moves"]
+        if p1_moved == p2_moved:
+            return  # both moved or neither, ignore
+        if not p1_moved:
+            m["p2_score"] += 1
+        else:
+            m["p1_score"] += 1
+        m["moves"] = {}
+        for ws_, result, ys, os in [
+            (m["p1_ws"], "lose" if not p1_moved else "win", m["p1_score"], m["p2_score"]),
+            (m["p2_ws"], "win" if not p1_moved else "lose", m["p2_score"], m["p1_score"])
+        ]:
+            if is_open(ws_):
+                await ws_.send(json.dumps({
+                    "type": "round_result",
+                    "your_move": "⏱️",
+                    "opp_move": "⏱️",
+                    "result": result,
+                    "your_score": ys,
+                    "opp_score": os,
+                    "timeout": True
+                }))
+    asyncio.create_task(check_timeout(game_id, match["round_deadline"]))
 
                     result = get_rps_result(p1_move, p2_move)
                     if result == "p1":
