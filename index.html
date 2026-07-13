@@ -424,9 +424,12 @@
             </button>
         </div>
 
-        <button id="leave-rps-btn" class="w-full py-2 rounded-xl text-xs font-medium" style="border:1px solid #1e1d2e; color:#4a4768; background:transparent;">
-            Leave game
-        </button>
+        <button id="rematch-btn" class="hidden w-full py-2.5 rounded-xl text-sm font-semibold mb-2" style="background:#1a1535; border:1px solid #7c3aed; color:#a78bfa;">
+    🔁 Rematch
+</button>
+<button id="leave-rps-btn" class="w-full py-2 rounded-xl text-xs font-medium" style="border:1px solid #1e1d2e; color:#4a4768; background:transparent;">
+    Leave game
+</button>
     </div>
 </div>
 <!-- Profile Modal -->
@@ -948,7 +951,6 @@ function onMatchOver(data) {
     setMoveButtons(false);
     document.getElementById('my-score').textContent = data.your_score;
     document.getElementById('opp-score').textContent = data.opp_score;
-
     if (data.won) {
         addWinnings(data.payout);
         setRPSResult(`🎉 You won! +$${data.payout.toFixed(2)} added to your wallet.`, '#22c55e');
@@ -957,9 +959,10 @@ function onMatchOver(data) {
     } else {
         setRPSResult('😔 You lost this match. Better luck next time!', '#ef4444');
         document.getElementById('rps-result').style.background = '#1c0a0a';
-        document.getElementById('rps-result').style.border = '1px solid #7f1d1d';
+  document.getElementById('rps-result').style.border = '1px solid #7f1d1d';
     }
     loadLeaderboard();
+    document.getElementById('rematch-btn').classList.remove('hidden');
 }
 
 function onOpponentDisconnected(data) {
@@ -974,6 +977,7 @@ function closeRPS() {
     document.getElementById('rps-modal').classList.add('hidden');
     document.getElementById('move-display').classList.add('hidden');
     activeGameId = null;
+    document.getElementById('rematch-btn').classList.add('hidden');
 }
 
 // ─── Leaderboard ───────────────────────────────────────────────────────────
@@ -1342,6 +1346,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Nav
     document.getElementById('start-btn').addEventListener('click', () => {
+document.getElementById('rematch-btn').addEventListener('click', () => {
+    document.getElementById('rematch-btn').classList.add('hidden');
+    openCreateModal(currentEntryFee);
+    closeRPS();
+});
         if (currentUser && userProfile) openCreateModal();
         else showAuthModal();
     });
