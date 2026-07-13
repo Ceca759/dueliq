@@ -684,6 +684,7 @@ function handleMessage(data) {
 else if (data.type === 'opp_word_count') onOppWordCount(data);
 else if (data.type === 'typing_over') onTypingOver(data);
     else if (data.type === 'opponent_moved') onOpponentMoved();
+else if (data.type === 'countdown') startCountdown();
     else if (data.type === 'round_result') onRoundResult(data);
     else if (data.type === 'match_over') onMatchOver(data);
     else if (data.type === 'opponent_disconnected') onOpponentDisconnected(data);
@@ -1005,7 +1006,26 @@ function getTimeAgo(date) {
     if (s < 86400) return Math.floor(s/3600) + 'h ago';
     return Math.floor(s/86400) + 'd ago';
 }
-
+function startCountdown() {
+    setMoveButtons(false);
+    document.getElementById('move-display').classList.add('hidden');
+    let count = 3;
+    const el = document.getElementById('rps-result');
+    el.style.background = '#0d0c18';
+    el.style.border = '1px solid #1e1d2e';
+    const tick = () => {
+        if (count > 0) {
+            el.innerHTML = `<span style="font-size:2rem;font-weight:700;color:#a78bfa;">${count}</span>`;
+            el.style.color = '#a78bfa';
+            count--;
+            setTimeout(tick, 1000);
+        } else {
+            el.innerHTML = `<span style="font-size:1.5rem;font-weight:700;color:#22c55e;">GO! 🎯</span>`;
+            setTimeout(() => setMoveButtons(true), 500);
+        }
+    };
+    tick();
+}
 // ─── Player count animation ─────────────────────────────────────────────────
 function animatePlayers() {
     onlinePlayers += Math.floor(Math.random() * 5) - 2;

@@ -296,9 +296,13 @@ elif action == "typing_start":
 
                 # Both players have moved — resolve the round
                 if "p1" in match["moves"] and "p2" in match["moves"]:
-                    p1_move = match["moves"]["p1"]
-                    p2_move = match["moves"]["p2"]
-                    match["moves"] = {}
+    p1_move = match["moves"]["p1"]
+    p2_move = match["moves"]["p2"]
+    match["moves"] = {}
+    for ws_ in [match["p1_ws"], match["p2_ws"]]:
+        if is_open(ws_):
+            await ws_.send(json.dumps({"type": "countdown"}))
+    await asyncio.sleep(3)
 
                     result = get_rps_result(p1_move, p2_move)
                     if result == "p1":
