@@ -318,15 +318,6 @@
     <div class="modal-anim rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
         <h3 class="text-xl font-bold mb-1">Create a Game</h3>
         <p class="text-sm mb-6" style="color:#6b6888;">Set your entry fee. Opponent matches it.</p>
-<label class="text-sm font-medium mb-2 block" style="color:#a78bfa;">Game</label>
-<div class="flex gap-2 mb-5">
-    <button class="game-type-btn flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2" data-type="rps" style="background:#1a1535; border:2px solid #7c3aed; color:#a78bfa;">
-        ✊ Rock Paper Scissors
-    </button>
-    <button class="game-type-btn flex-1 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2" data-type="typing" style="background:#1a1828; border:1px solid #2a2740; color:#6b6888;">
-        ⌨️ Typing Race
-    </button>
-</div>
 <input type="hidden" id="game-type-select" value="rps">
         <label class="text-sm font-medium mb-2 block" style="color:#a78bfa;">Entry Fee (min $1)</label>
         <div class="relative mb-4">
@@ -729,7 +720,7 @@ function renderLobby(games) {
             <div class="text-right">
                 ${isMyGame
                     ? '<span class="text-xs" style="color:#4a4768;">Waiting...</span>'
-                    : `<button class="join-btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold" data-id="${g.game_id}" data-fee="${g.entry_fee}" data-type="${g.game_type || 'rps'}">Join</button>`_fee}">Join</button>`
+                    : `<button class="join-btn btn-primary px-3 py-1.5 rounded-lg text-xs font-semibold" data-id="${g.game_id}" data-fee="${g.entry_fee}">Join</button>`
                 }
             </div>
         </div>`;
@@ -737,8 +728,6 @@ function renderLobby(games) {
 
     // Wire up join buttons
     document.querySelectorAll('.join-btn').forEach(btn => {
-    btn.addEventListener('click', () => joinGame(btn.dataset.id, parseFloat(btn.dataset.fee)));
-});
         btn.addEventListener('click', () => joinGame(btn.dataset.id, parseFloat(btn.dataset.fee)));
     });
 }
@@ -839,8 +828,8 @@ function onMatchStarted(data) {
     document.getElementById('rps-pot').textContent = '$' + (data.entry_fee * 2).toFixed(2);
     document.getElementById('rps-subtitle').textContent = 'Best of 3 · vs ' + data.opponent;
     document.getElementById('move-display').classList.add('hidden');
-    setRPSResult('⚔️ Match found! Make your move.', '#a78bfa');
-    setMoveButtons(true);
+    setRPSResult('⚔️ Match found! Get ready...', '#a78bfa');
+    setMoveButtons(false);
     document.getElementById('rps-modal').classList.remove('hidden');
 }
 
@@ -885,11 +874,9 @@ function getMatchupAnim(winner, loser) {
     return ['', ''];
 }
 
-function onRoundResult(data) {function onRoundResult(data) {
+function onRoundResult(data) {
     clearInterval(roundTimerInterval);
     document.getElementById('rps-subtitle').style.color = '#6b6888';
-    myMoveChosen = null;
-    myScore = data.your_score;
     myMoveChosen = null;
     myScore = data.your_score;
     oppScore = data.opp_score;
@@ -1035,7 +1022,6 @@ function startCountdown() {
     };
     tick();
 }
-function startCountdown() {
 let roundTimerInterval = null;
 function startRoundTimer(seconds) {
     clearInterval(roundTimerInterval);
@@ -1052,25 +1038,6 @@ function startRoundTimer(seconds) {
             subtitle.textContent = 'Time\'s up!';
         }
     }, 1000);
-}
-    setMoveButtons(false);
-    document.getElementById('move-display').classList.add('hidden');
-    let count = 3;
-    const el = document.getElementById('rps-result');
-    el.style.background = '#0d0c18';
-    el.style.border = '1px solid #1e1d2e';
-    const tick = () => {
-        if (count > 0) {
-            el.innerHTML = `<span style="font-size:2rem;font-weight:700;color:#a78bfa;">${count}</span>`;
-            el.style.color = '#a78bfa';
-            count--;
-            setTimeout(tick, 1000);
-        } else {
-            el.innerHTML = `<span style="font-size:1.5rem;font-weight:700;color:#22c55e;">GO! 🎯</span>`;
-            setTimeout(() => setMoveButtons(true), 500);
-        }
-    };
-    tick();
 }
 // ─── Player count animation ─────────────────────────────────────────────────
 function animatePlayers() {
