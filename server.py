@@ -4,10 +4,11 @@ import json
 from datetime import datetime
 import os
 import urllib.request
+import urllib.error
 import uuid
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://ubrfipncygmigbgqhwal.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")  # service_role key — server only, never in client
 
 HOUSE_CUT = 0.15  # 15%
 
@@ -18,45 +19,95 @@ RESULT_PAUSE_SECONDS = 2   # let the result animation show before next round
 MAX_DOUBLE_TIMEOUTS = 2    # both players idle this many rounds in a row -> void + refund
 
 
+# ── Supabase helpers (all run in executor: urllib is blocking) ───────────────
+def _sb_call(method, path, payload=None, bearer=None):
+    """Blocking Supabase REST call. Returns (status, parsed-json-or-None)."""
+    data = json.dumps(payload).encode() if payload is not None else None
+    req = urllib.request.Request(
+        f"{SUPABASE_URL}{path}",
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {bearer or SUPABASE_KEY}",
+            "Prefer": "return=representation"
+        },
+        method=method
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            body = resp.read().decode()
+            return resp.status, (json.loads(body) if body else None)
+    except urllib.error.HTTPError as e:
+        return e.code, None
+    except Exception:
+        return 0, None
+
+
+async def sb(method, path, payload=None, bearer=None):
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, lambda: _sb_call(method, path, payload, bearer))
+
+
+async def verify_token(access_token):
+    """Verify a Supabase JWT and return (user_id, email) or (None, None)."""
+    if not SUPABASE_KEY or not access_token:
+        return None, None
+    status, body = await sb("GET", "/auth/v1/user", bearer=access_token)
+    if status == 200 and body and body.get("id"):
+        return body["id"], body.get("email")
+    return None, None
+
+
+async def wallet_rpc(fn, args):
+    """Call a wallet RPC. Returns new balance (float) or None on failure/insufficient."""
+    if not SUPABASE_KEY:
+        return 0.0  # dev mode: no key -> don't enforce wallets
+    status, body = await sb("POST", f"/rest/v1/rpc/{fn}", payload=args)
+    if status == 200 and body is not None:
+        bal = float(body)
+        return None if bal < 0 else bal
+    return None
+
+
+async def wallet_debit(user_id, amount):
+    return await wallet_rpc("wallet_debit", {"p_user": user_id, "p_amount": amount})
+
+
+async def wallet_credit(user_id, amount):
+    return await wallet_rpc("wallet_credit", {"p_user": user_id, "p_amount": amount})
+
+
 async def record_match(player1_id, player2_id, winner_id, game, entry_fee, payout):
     if not SUPABASE_KEY:
         print("[Supabase] No SUPABASE_KEY set, skipping match record")
         return
-    try:
-        payload = json.dumps({
-            "player1_id": player1_id,
-            "player2_id": player2_id,
-            "winner_id": winner_id,
-            "game": game,
-            "entry_fee": entry_fee,
-            "payout": payout
-        }).encode()
-        req = urllib.request.Request(
-            f"{SUPABASE_URL}/rest/v1/matches",
-            data=payload,
-            headers={
-                "Content-Type": "application/json",
-                "apikey": SUPABASE_KEY,
-                "Authorization": f"Bearer {SUPABASE_KEY}",
-                "Prefer": "return=minimal"
-            },
-            method="POST"
-        )
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, timeout=5))
+    status, _ = await sb("POST", "/rest/v1/matches", payload={
+        "player1_id": player1_id,
+        "player2_id": player2_id,
+        "winner_id": winner_id,
+        "game": game,
+        "entry_fee": entry_fee,
+        "payout": payout
+    })
+    if status in (200, 201):
         print(f"[Supabase] Match recorded: {game} winner={winner_id}")
-    except Exception as e:
-        print(f"[Supabase] Failed to record match: {e}")
+    else:
+        print(f"[Supabase] Failed to record match: HTTP {status}")
 
-# ── Lobby ──────────────────────────────────────────────────────────────────
+
+# ── State ────────────────────────────────────────────────────────────────────
 # open_games: { game_id: { creator_ws, creator_id, creator_name, entry_fee, created_at } }
 open_games = {}
 
-# active_matches: { game_id: { p1_ws, p2_ws, p1_id, p2_id, p1_score, p2_score, entry_fee, moves, round_id, timer_task, no_move_streak } }
+# active_matches: { game_id: { p1_ws, p2_ws, p1_id, p2_id, p1_score, p2_score, entry_fee, moves, round_id, timer_task, no_move_streak, paid_out } }
 active_matches = {}
 
 # ws -> game_id (so we can clean up on disconnect)
 ws_to_game = {}
+
+# ws -> {"user_id":..., "username":...} set by a verified "auth" action
+ws_auth = {}
 
 connected_clients = set()
 
@@ -100,6 +151,11 @@ async def send_both(match, msg_obj):
                 await ws_.send(data)
             except:
                 pass
+
+
+async def send_err(ws, msg):
+    if is_open(ws):
+        await ws.send(json.dumps({"type": "error", "msg": msg}))
 
 
 def get_rps_result(p1, p2):
@@ -182,10 +238,15 @@ async def check_timeout(game_id, round_id):
 async def void_match_refund(game_id):
     """Both players idle too long -> refund entry fees, no house cut, end match."""
     match = active_matches.pop(game_id, None)
-    if not match:
+    if not match or match.get("paid_out"):
         return
+    match["paid_out"] = True
     refund = round(match["entry_fee"], 2)
-    await send_both(match, {"type": "match_voided", "refund": refund})
+    b1 = await wallet_credit(match["p1_id"], refund)
+    b2 = await wallet_credit(match["p2_id"], refund)
+    for ws_, bal in ((match["p1_ws"], b1), (match["p2_ws"], b2)):
+        if is_open(ws_):
+            await ws_.send(json.dumps({"type": "match_voided", "refund": refund, "balance": bal}))
     ws_to_game.pop(match["p1_ws"], None)
     ws_to_game.pop(match["p2_ws"], None)
     print(f"[Match] Voided (both idle): {game_id} refund=${refund} each")
@@ -233,6 +294,10 @@ async def advance_after_round(game_id):
         return
 
     if match["p1_score"] >= 3 or match["p2_score"] >= 3:
+        if match.get("paid_out"):
+            return
+        match["paid_out"] = True
+
         p1_won = match["p1_score"] >= 3
         winner_ws = match["p1_ws"] if p1_won else match["p2_ws"]
         loser_ws = match["p2_ws"] if p1_won else match["p1_ws"]
@@ -244,9 +309,12 @@ async def advance_after_round(game_id):
         pot = match["entry_fee"] * 2
         payout = round(pot * (1 - HOUSE_CUT), 2)
 
+        # Server-side payout — the client never touches the wallet.
+        balance = await wallet_credit(winner_id, payout)
+
         if is_open(winner_ws):
             await winner_ws.send(json.dumps({
-                "type": "match_over", "won": True, "payout": payout,
+                "type": "match_over", "won": True, "payout": payout, "balance": balance,
                 "your_score": w_score, "opp_score": l_score
             }))
         if is_open(loser_ws):
@@ -281,18 +349,59 @@ async def handler(websocket):
             data = json.loads(message)
             action = data.get("action")
 
+            # ── Authenticate this connection (Supabase JWT) ────────────
+            if action == "auth":
+                user_id, _email = await verify_token(data.get("token"))
+                if not user_id:
+                    await send_err(websocket, "Login verification failed. Refresh and sign in again.")
+                    continue
+                ws_auth[websocket] = {
+                    "user_id": user_id,
+                    "username": data.get("username") or "Player"
+                }
+                await websocket.send(json.dumps({"type": "auth_ok"}))
+                print(f"[Auth] Verified {user_id}")
+
+            # ── Test credits (+$20, capped server-side) ────────────────
+            elif action == "test_credits":
+                auth = ws_auth.get(websocket)
+                if not auth:
+                    await send_err(websocket, "Please sign in first.")
+                    continue
+                balance = await wallet_rpc("test_credits", {"p_user": auth["user_id"]})
+                if balance is None:
+                    await send_err(websocket, "Test credits are capped at $100 balance.")
+                else:
+                    await websocket.send(json.dumps({"type": "wallet_update", "balance": balance}))
+
             # ── Create a new game ──────────────────────────────────────
-            if action == "create_game":
-                entry_fee = float(data.get("entry_fee", 1))
-                if entry_fee < 1:
-                    await websocket.send(json.dumps({"type": "error", "msg": "Minimum entry fee is $1"}))
+            elif action == "create_game":
+                auth = ws_auth.get(websocket)
+                if not auth:
+                    await send_err(websocket, "Please sign in first.")
+                    continue
+                if websocket in ws_to_game:
+                    await send_err(websocket, "You already have an open game or active match.")
+                    continue
+                try:
+                    entry_fee = round(float(data.get("entry_fee", 1)), 2)
+                except (TypeError, ValueError):
+                    continue
+                if entry_fee < 1 or entry_fee > 10000:
+                    await send_err(websocket, "Entry fee must be between $1 and $10,000")
+                    continue
+
+                # Debit happens HERE, atomically. Insufficient funds -> no game.
+                balance = await wallet_debit(auth["user_id"], entry_fee)
+                if balance is None:
+                    await send_err(websocket, "Insufficient funds.")
                     continue
 
                 game_id = str(uuid.uuid4())[:8]
                 open_games[game_id] = {
                     "creator_ws": websocket,
-                    "creator_id": data.get("user_id"),
-                    "creator_name": data.get("username"),
+                    "creator_id": auth["user_id"],
+                    "creator_name": auth["username"],
                     "entry_fee": entry_fee,
                     "created_at": datetime.utcnow().isoformat()
                 }
@@ -301,51 +410,81 @@ async def handler(websocket):
                 await websocket.send(json.dumps({
                     "type": "game_created",
                     "game_id": game_id,
-                    "entry_fee": entry_fee
+                    "entry_fee": entry_fee,
+                    "balance": balance
                 }))
                 await broadcast_lobby()
-                print(f"[Lobby] Game created: {game_id} by {data.get('username')} for ${entry_fee}")
+                print(f"[Lobby] Game created: {game_id} by {auth['username']} for ${entry_fee}")
 
-            # ── Cancel a game (refund) ─────────────────────────────────
+            # ── Cancel a game (server-side refund) ─────────────────────
             elif action == "cancel_game":
                 game_id = data.get("game_id")
                 if game_id in open_games and open_games[game_id]["creator_ws"] == websocket:
-                    del open_games[game_id]
+                    game = open_games.pop(game_id)
                     ws_to_game.pop(websocket, None)
-                    await websocket.send(json.dumps({"type": "game_cancelled", "game_id": game_id}))
+                    balance = await wallet_credit(game["creator_id"], game["entry_fee"])
+                    await websocket.send(json.dumps({
+                        "type": "game_cancelled",
+                        "game_id": game_id,
+                        "refund": game["entry_fee"],
+                        "balance": balance
+                    }))
                     await broadcast_lobby()
-                    print(f"[Lobby] Game cancelled: {game_id}")
+                    print(f"[Lobby] Game cancelled: {game_id} refund=${game['entry_fee']}")
 
             # ── Join a game ────────────────────────────────────────────
             elif action == "join_game":
+                auth = ws_auth.get(websocket)
+                if not auth:
+                    await send_err(websocket, "Please sign in first.")
+                    continue
+                if websocket in ws_to_game:
+                    await send_err(websocket, "You already have an open game or active match.")
+                    continue
                 game_id = data.get("game_id")
                 if game_id not in open_games:
-                    await websocket.send(json.dumps({"type": "error", "msg": "Game no longer available"}))
+                    await send_err(websocket, "Game no longer available")
                     continue
 
-                game = open_games.pop(game_id)
-                creator_ws = game["creator_ws"]
+                game = open_games[game_id]
+                if game["creator_id"] == auth["user_id"]:
+                    await send_err(websocket, "You can't join your own game.")
+                    continue
 
+                creator_ws = game["creator_ws"]
                 if not is_open(creator_ws):
-                    await websocket.send(json.dumps({"type": "error", "msg": "Game creator disconnected"}))
+                    # Creator gone: remove the game and refund the creator.
+                    open_games.pop(game_id, None)
+                    ws_to_game.pop(creator_ws, None)
+                    await wallet_credit(game["creator_id"], game["entry_fee"])
+                    await send_err(websocket, "Game creator disconnected")
                     await broadcast_lobby()
                     continue
+
+                # Debit the joiner. Insufficient funds -> game stays open.
+                balance = await wallet_debit(auth["user_id"], game["entry_fee"])
+                if balance is None:
+                    await send_err(websocket, "Insufficient funds.")
+                    continue
+
+                open_games.pop(game_id, None)
 
                 # Set up active match
                 active_matches[game_id] = {
                     "p1_ws": creator_ws,
                     "p2_ws": websocket,
                     "p1_id": game["creator_id"],
-                    "p2_id": data.get("user_id"),
+                    "p2_id": auth["user_id"],
                     "p1_name": game["creator_name"],
-                    "p2_name": data.get("username"),
+                    "p2_name": auth["username"],
                     "p1_score": 0,
                     "p2_score": 0,
                     "entry_fee": game["entry_fee"],
                     "moves": {},
                     "round_id": 0,
                     "timer_task": None,
-                    "no_move_streak": 0
+                    "no_move_streak": 0,
+                    "paid_out": False
                 }
                 ws_to_game[creator_ws] = game_id
                 ws_to_game[websocket] = game_id
@@ -353,20 +492,21 @@ async def handler(websocket):
                 matched_msg_p1 = json.dumps({
                     "type": "match_started",
                     "game_id": game_id,
-                    "opponent": data.get("username"),
+                    "opponent": auth["username"],
                     "entry_fee": game["entry_fee"]
                 })
                 matched_msg_p2 = json.dumps({
                     "type": "match_started",
                     "game_id": game_id,
                     "opponent": game["creator_name"],
-                    "entry_fee": game["entry_fee"]
+                    "entry_fee": game["entry_fee"],
+                    "balance": balance
                 })
 
                 await creator_ws.send(matched_msg_p1)
                 await websocket.send(matched_msg_p2)
                 await broadcast_lobby()
-                print(f"[Match] Started: {game_id} {game['creator_name']} vs {data.get('username')} for ${game['entry_fee']}")
+                print(f"[Match] Started: {game_id} {game['creator_name']} vs {auth['username']} for ${game['entry_fee']}")
 
                 # Kick off the first round (countdown -> timer).
                 asyncio.create_task(start_round(game_id))
@@ -422,40 +562,48 @@ async def handler(websocket):
 
     finally:
         connected_clients.discard(websocket)
+        ws_auth.pop(websocket, None)
 
-        # If they had an open game, remove it and refund (client-side handles refund on game_cancelled)
         game_id = ws_to_game.pop(websocket, None)
         if game_id:
             if game_id in open_games:
-                # Creator disconnected before anyone joined
-                del open_games[game_id]
+                # Creator disconnected before anyone joined — refund server-side.
+                game = open_games.pop(game_id)
+                await wallet_credit(game["creator_id"], game["entry_fee"])
                 await broadcast_lobby()
+                print(f"[Lobby] Creator left, refunded: {game_id}")
             elif game_id in active_matches:
-                # Player disconnected mid-match — opponent wins
+                # Player disconnected mid-match — opponent wins.
                 match = active_matches.pop(game_id)
-                task = match.get("timer_task")
-                if task and not task.done():
-                    task.cancel()
-                opp_ws = match["p2_ws"] if websocket == match["p1_ws"] else match["p1_ws"]
-                opp_id = match["p2_id"] if websocket == match["p1_ws"] else match["p1_id"]
-                my_id = match["p1_id"] if websocket == match["p1_ws"] else match["p2_id"]
-                ws_to_game.pop(opp_ws, None)
+                if not match.get("paid_out"):
+                    match["paid_out"] = True
+                    task = match.get("timer_task")
+                    if task and not task.done():
+                        task.cancel()
+                    opp_ws = match["p2_ws"] if websocket == match["p1_ws"] else match["p1_ws"]
+                    opp_id = match["p2_id"] if websocket == match["p1_ws"] else match["p1_id"]
+                    my_id = match["p1_id"] if websocket == match["p1_ws"] else match["p2_id"]
+                    ws_to_game.pop(opp_ws, None)
 
-                pot = match["entry_fee"] * 2
-                payout = round(pot * (1 - HOUSE_CUT), 2)
+                    pot = match["entry_fee"] * 2
+                    payout = round(pot * (1 - HOUSE_CUT), 2)
+                    balance = await wallet_credit(opp_id, payout)
 
-                if is_open(opp_ws):
-                    await opp_ws.send(json.dumps({
-                        "type": "opponent_disconnected",
-                        "payout": payout
-                    }))
-                await record_match(opp_id, my_id, opp_id, "rps", match["entry_fee"], payout)
+                    if is_open(opp_ws):
+                        await opp_ws.send(json.dumps({
+                            "type": "opponent_disconnected",
+                            "payout": payout,
+                            "balance": balance
+                        }))
+                    await record_match(opp_id, my_id, opp_id, "rps", match["entry_fee"], payout)
 
         print(f"[{datetime.now()}] Disconnected | Total: {len(connected_clients)}")
 
 
 async def main():
     port = int(os.environ.get("PORT", 8080))
+    if not SUPABASE_KEY:
+        print("[WARN] SUPABASE_KEY not set — wallets NOT enforced (dev mode)")
     print(f"WebSocket starting on port {port}")
     async with websockets.serve(handler, "0.0.0.0", port):
         print(f"WebSocket running on port {port}")

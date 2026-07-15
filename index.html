@@ -227,34 +227,6 @@
                     <div class="text-xs" style="color:#4a4768;">Example: $10 game → pot is $20 → winner gets <span style="color:#22c55e; font-weight:600;">$17</span></div>
                 </div>
             </div>
-
-            <!-- Coming Soon games -->
-            <div class="rounded-2xl p-5" style="background:#0d0c18; border:1px solid #2a2740;">
-                <h3 class="font-bold mb-3" style="color:#f1f0ff;">More Games</h3>
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between py-2 px-3 rounded-lg" style="background:#13121f;">
-                        <div class="flex items-center gap-2">
-                            <span>🧠</span>
-                            <span class="text-sm font-medium" style="color:#6b6888;">Trivia Battle</span>
-                        </div>
-                        <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1d2e; color:#4a4768;">Soon</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2 px-3 rounded-lg" style="background:#13121f;">
-                        <div class="flex items-center gap-2">
-                            <span>⌨️</span>
-                            <span class="text-sm font-medium" style="color:#6b6888;">Typing Race</span>
-                        </div>
-                        <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1d2e; color:#4a4768;">Soon</span>
-                    </div>
-                    <div class="flex items-center justify-between py-2 px-3 rounded-lg" style="background:#13121f;">
-                        <div class="flex items-center gap-2">
-                            <span>🎯</span>
-                            <span class="text-sm font-medium" style="color:#6b6888;">Reaction Time</span>
-                        </div>
-                        <span class="text-xs px-2 py-0.5 rounded-full" style="background:#1e1d2e; color:#4a4768;">Soon</span>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -486,51 +458,6 @@
         </div>
     </div>
 </div>
-<!-- Typing Race Modal -->
-<div id="typing-modal" class="hidden fixed inset-0 flex items-center justify-center z-50" style="background:rgba(0,0,0,0.85);">
-    <div class="modal-anim rounded-2xl w-full max-w-lg mx-4 p-8 shadow-2xl" style="background:#13121f; border:1px solid #2a2740;">
-
-        <div class="flex justify-between items-start mb-5">
-            <div>
-                <h3 class="text-xl font-bold">Typing Race</h3>
-                <p id="typing-subtitle" class="text-sm mt-0.5" style="color:#6b6888;">Best of 60 seconds</p>
-            </div>
-            <div class="text-right">
-                <div class="text-xs mb-1" style="color:#4a4768;">TIME LEFT</div>
-                <div id="typing-timer" class="text-3xl font-bold" style="color:#a78bfa; font-variant-numeric:tabular-nums;">1:00</div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 mb-5">
-            <div class="p-3 rounded-xl text-center" style="background:#0d0c18; border:1px solid #1e1d2e;">
-                <div class="text-xs uppercase tracking-wide mb-1" style="color:#4a4768;">You</div>
-                <div id="typing-my-count" class="text-2xl font-bold" style="color:#22c55e;">0 <span class="text-sm font-normal" style="color:#4a4768;">words</span></div>
-            </div>
-            <div class="p-3 rounded-xl text-center" style="background:#0d0c18; border:1px solid #1e1d2e;">
-                <div id="typing-opp-label" class="text-xs uppercase tracking-wide mb-1" style="color:#4a4768;">Opponent</div>
-                <div id="typing-opp-count" class="text-2xl font-bold">0 <span class="text-sm font-normal" style="color:#4a4768;">words</span></div>
-            </div>
-        </div>
-
-        <div class="rounded-2xl p-6 text-center mb-4" style="background:#0d0c18; border:1px solid #1e1d2e;">
-            <div class="text-xs uppercase tracking-wide mb-3" style="color:#4a4768;">Type this word</div>
-            <div id="typing-word" class="text-5xl font-bold mb-3" style="color:#a78bfa; font-family:monospace; letter-spacing:3px;"></div>
-            <div id="typing-dots" class="flex justify-center gap-1.5 mb-2"></div>
-            <div id="typing-letter-hint" class="text-xs" style="color:#4a4768;"></div>
-        </div>
-
-        <input type="text" id="typing-input" placeholder="Type here and press Enter..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            class="w-full rounded-xl px-4 py-3.5 text-center text-lg font-mono mb-3"
-            style="letter-spacing:2px;">
-
-        <div id="typing-result" class="hidden result-banner mb-3" style="background:#0d0c18; border:1px solid #1e1d2e;"></div>
-
-        <div class="flex justify-between items-center">
-            <div id="typing-word-count" class="text-xs" style="color:#4a4768;">Waiting for match...</div>
-            <button id="leave-typing-btn" class="text-xs py-1.5 px-3 rounded-lg" style="border:1px solid #1e1d2e; color:#4a4768; background:transparent;">Leave</button>
-        </div>
-    </div>
-</div>
 <script>
 // ─── Password protection ───────────────────────────────────────────────────
 const isDev = new URLSearchParams(window.location.search).has('dev');
@@ -627,37 +554,47 @@ async function logout() {
     updateNav();
 }
 
-async function addWinnings(amount) {
-    userProfile.wallet = parseFloat((userProfile.wallet + amount).toFixed(2));
-    await db.from('profiles').update({ wallet: userProfile.wallet }).eq('id', currentUser.id);
+// Wallet is server-authoritative: the client only DISPLAYS balances it
+// receives from the game server. No DB writes from the browser.
+function setWalletDisplay(balance) {
+    if (balance === null || balance === undefined || isNaN(parseFloat(balance))) return;
+    userProfile.wallet = parseFloat(parseFloat(balance).toFixed(2));
     document.getElementById('wallet-display').textContent = '$' + userProfile.wallet.toFixed(2);
 }
 
-async function deductWallet(amount) {
-    userProfile.wallet = parseFloat((userProfile.wallet - amount).toFixed(2));
-    await db.from('profiles').update({ wallet: userProfile.wallet }).eq('id', currentUser.id);
-    document.getElementById('wallet-display').textContent = '$' + userProfile.wallet.toFixed(2);
+async function refreshWallet() {
+    if (!currentUser) return;
+    const r = await db.from('profiles').select('wallet').eq('id', currentUser.id).single();
+    if (r.data) setWalletDisplay(r.data.wallet);
 }
 
-async function addTestCredits() {
+function addTestCredits() {
     if (!currentUser || !userProfile) return;
-    const newWallet = parseFloat(userProfile.wallet) + 20;
-    const r = await db.from('profiles').update({ wallet: newWallet }).eq('id', currentUser.id);
-    if (r.error) { alert('Error: ' + r.error.message); return; }
-    userProfile.wallet = newWallet;
-    document.getElementById('wallet-display').textContent = '$' + newWallet.toFixed(2);
+    wsSend({ action: 'test_credits' });
     document.getElementById('funds-modal').classList.add('hidden');
     if (pendingFee) { const f = pendingFee; pendingFee = null; openCreateModal(f); }
 }
 
 // ─── WebSocket ─────────────────────────────────────────────────────────────
+let wsAuthed = false;
+
 function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return;
+    wsAuthed = false;
     ws = new WebSocket(WS_URL);
-    ws.onopen = () => console.log('[WS] Connected');
+    ws.onopen = async () => {
+        console.log('[WS] Connected');
+        // Authenticate this connection with our Supabase session token
+        const s = await db.auth.getSession();
+        const token = s.data && s.data.session ? s.data.session.access_token : null;
+        if (token && userProfile) {
+            wsSend({ action: 'auth', token, username: userProfile.username });
+        }
+    };
     ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
     ws.onerror = (e) => console.error('[WS] Error', e);
     ws.onclose = () => {
+        wsAuthed = false;
         console.log('[WS] Closed — reconnecting in 3s');
         setTimeout(() => { if (currentUser) connectWebSocket(); }, 3000);
     };
@@ -669,21 +606,27 @@ function wsSend(obj) {
 
 function handleMessage(data) {
     if (data.type === 'lobby_update') renderLobby(data.games);
+    else if (data.type === 'auth_ok') { wsAuthed = true; console.log('[WS] Authenticated'); }
+    else if (data.type === 'wallet_update') setWalletDisplay(data.balance);
     else if (data.type === 'game_created') onGameCreated(data);
     else if (data.type === 'game_cancelled') onGameCancelled(data);
-    else if (data.type === 'match_started') {
-    if (data.game_type === 'typing') onMatchStartedTyping(data);
-    else onMatchStarted(data);
-}
-else if (data.type === 'opp_word_count') onOppWordCount(data);
-else if (data.type === 'typing_over') onTypingOver(data);
+    else if (data.type === 'match_started') onMatchStarted(data);
     else if (data.type === 'opponent_moved') onOpponentMoved();
-else if (data.type === 'countdown') startCountdown();
-else if (data.type === 'round_timer') startRoundTimer(data.seconds);
+    else if (data.type === 'countdown') startCountdown();
+    else if (data.type === 'round_timer') startRoundTimer(data.seconds);
+    else if (data.type === 'round_timeout_replay') setRPSResult("⏱️ Nobody moved! Replaying round...", '#f59e0b');
+    else if (data.type === 'match_voided') onMatchVoided(data);
     else if (data.type === 'round_result') onRoundResult(data);
     else if (data.type === 'match_over') onMatchOver(data);
     else if (data.type === 'opponent_disconnected') onOpponentDisconnected(data);
     else if (data.type === 'error') alert(data.msg);
+}
+
+function onMatchVoided(data) {
+    activeGameId = null;
+    setMoveButtons(false);
+    setWalletDisplay(data.balance);
+    setRPSResult(`⏱️ Match voided — nobody played. $${data.refund.toFixed(2)} refunded.`, '#f59e0b');
 }
 
 // ─── Lobby ─────────────────────────────────────────────────────────────────
@@ -762,27 +705,23 @@ async function confirmCreateGame() {
     }
 
     document.getElementById('create-modal').classList.add('hidden');
-    await deductWallet(fee);
-    const gameType = document.getElementById('game-type-select') ? document.getElementById('game-type-select').value : 'rps';
-wsSend({ action: 'create_game', entry_fee: fee, user_id: currentUser.id, username: userProfile.username, game_type: gameType });
+    // Server debits the wallet atomically; we just ask.
+    wsSend({ action: 'create_game', entry_fee: fee });
 }
 
 function onGameCreated(data) {
     myGameId = data.game_id;
+    setWalletDisplay(data.balance);
     document.getElementById('my-game-banner').classList.remove('hidden');
     document.getElementById('my-game-fee').textContent = '$' + parseFloat(data.entry_fee).toFixed(2);
 }
 
 function onGameCancelled(data) {
-    // Refund
     if (data.game_id === myGameId) {
         myGameId = null;
         document.getElementById('my-game-banner').classList.add('hidden');
-        // The server already removed it from the lobby — now refund wallet
-        // We need to find the fee — stored in the banner
-        const feeText = document.getElementById('my-game-fee').textContent.replace('$', '');
-        const fee = parseFloat(feeText);
-        if (fee > 0) addWinnings(fee);
+        // Server already refunded — just show the new balance.
+        setWalletDisplay(data.balance);
     }
 }
 
@@ -803,8 +742,8 @@ async function joinGame(gameId, fee) {
         return;
     }
 
-    await deductWallet(fee);
-    wsSend({ action: 'join_game', game_id: gameId, user_id: currentUser.id, username: userProfile.username });
+    // Server debits the wallet; if we're broke it sends an error back.
+    wsSend({ action: 'join_game', game_id: gameId });
 }
 
 // ─── RPS Game ──────────────────────────────────────────────────────────────
@@ -939,7 +878,7 @@ function onMatchOver(data) {
     document.getElementById('my-score').textContent = data.your_score;
     document.getElementById('opp-score').textContent = data.opp_score;
     if (data.won) {
-        addWinnings(data.payout);
+        setWalletDisplay(data.balance);
         setRPSResult(`🎉 You won! +$${data.payout.toFixed(2)} added to your wallet.`, '#22c55e');
         document.getElementById('rps-result').style.background = '#052e16';
         document.getElementById('rps-result').style.border = '1px solid #166534';
@@ -955,7 +894,7 @@ function onMatchOver(data) {
 function onOpponentDisconnected(data) {
     activeGameId = null;
     setMoveButtons(false);
-    addWinnings(data.payout);
+    setWalletDisplay(data.balance);
     setRPSResult(`🏃 Opponent disconnected! You win by default. +$${data.payout.toFixed(2)}`, '#22c55e');
     loadLeaderboard();
 }
@@ -1160,172 +1099,6 @@ function playBeep(correct) {
     } catch(e) {}
 }
 
-// ─── Typing Race ────────────────────────────────────────────────────────────
-let typingWords = [];
-let typingIndex = 0;
-let typingMyCount = 0;
-let typingOppCount = 0;
-let typingGameId = null;
-let typingTimerInterval = null;
-let typingSecondsLeft = 60;
-let typingStarted = false;
-
-function onMatchStartedTyping(data) {
-    typingWords = data.words;
-    typingIndex = 0;
-    typingMyCount = 0;
-    typingOppCount = 0;
-    typingGameId = data.game_id;
-    typingSecondsLeft = 60;
-    typingStarted = false;
-    activeGameId = data.game_id;
-
-    document.getElementById('typing-subtitle').textContent = '60 seconds · vs ' + data.opponent;
-    document.getElementById('typing-opp-label').textContent = data.opponent;
-    document.getElementById('typing-my-count').innerHTML = '0 <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
-    document.getElementById('typing-opp-count').innerHTML = '0 <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
-    document.getElementById('typing-timer').textContent = '1:00';
-    document.getElementById('typing-result').classList.add('hidden');
-    document.getElementById('typing-input').value = '';
-    document.getElementById('typing-input').disabled = false;
-    document.getElementById('typing-word-count').textContent = 'Word 1 · type to start!';
-
-    showTypingWord();
-    document.getElementById('typing-modal').classList.remove('hidden');
-    setTimeout(() => document.getElementById('typing-input').focus(), 100);
-}
-
-function showTypingWord() {
-    const word = typingWords[typingIndex % typingWords.length];
-    const wordEl = document.getElementById('typing-word');
-    wordEl.textContent = word;
-    wordEl.style.color = '#a78bfa';
-    wordEl.classList.remove('word-correct');
-
-    // Letter dots
-    const dots = document.getElementById('typing-dots');
-    dots.innerHTML = word.split('').map(() =>
-        '<div style="width:7px;height:7px;border-radius:50%;background:#1e1d2e;"></div>'
-    ).join('');
-    document.getElementById('typing-letter-hint').textContent = '';
-    document.getElementById('typing-input').value = '';
-}
-
-function updateLetterDots(typed, word) {
-    const dots = document.getElementById('typing-dots').children;
-    for (let i = 0; i < word.length; i++) {
-        if (i < typed.length) {
-            dots[i].style.background = typed[i] === word[i] ? '#22c55e' : '#ef4444';
-        } else {
-            dots[i].style.background = '#1e1d2e';
-        }
-    }
-    const hint = typed.length + ' of ' + word.length + ' letters';
-    document.getElementById('typing-letter-hint').textContent = hint;
-}
-
-function startTypingTimer() {
-    if (typingStarted) return;
-    typingStarted = true;
-    wsSend({ action: 'typing_start', game_id: typingGameId });
-    typingTimerInterval = setInterval(() => {
-        typingSecondsLeft--;
-        const m = Math.floor(typingSecondsLeft / 60);
-        const s = typingSecondsLeft % 60;
-        document.getElementById('typing-timer').textContent = m + ':' + String(s).padStart(2, '0');
-        if (typingSecondsLeft <= 10) {
-            document.getElementById('typing-timer').style.color = '#ef4444';
-        }
-        if (typingSecondsLeft <= 0) {
-            clearInterval(typingTimerInterval);
-            document.getElementById('typing-input').disabled = true;
-        }
-    }, 1000);
-}
-
-function handleTypingInput(e) {
-    if (!typingGameId) return;
-    const input = document.getElementById('typing-input');
-    const typed = input.value;
-    const word = typingWords[typingIndex % typingWords.length];
-
-    if (!typingStarted && typed.length > 0) startTypingTimer();
-
-    // Submit on Enter or Space
-    if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        const attempt = typed.trim();
-        if (attempt === word) {
-            // Correct!
-            playBeep(true);
-            const wordEl = document.getElementById('typing-word');
-            wordEl.style.color = '#22c55e';
-            wordEl.classList.add('word-correct');
-            typingMyCount++;
-            typingIndex++;
-            document.getElementById('typing-my-count').innerHTML = typingMyCount + ' <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
-            document.getElementById('typing-word-count').textContent = 'Word ' + (typingIndex + 1);
-            wsSend({ action: 'typing_word', game_id: typingGameId });
-            setTimeout(() => showTypingWord(), 300);
-        } else {
-            // Wrong
-            playBeep(false);
-            input.classList.add('input-shake');
-            input.style.borderColor = '#ef4444';
-            setTimeout(() => {
-                input.classList.remove('input-shake');
-                input.style.borderColor = '';
-                input.value = '';
-            }, 350);
-        }
-        return;
-    }
-
-    updateLetterDots(typed, word);
-}
-
-function onOppWordCount(data) {
-    typingOppCount = data.count;
-    document.getElementById('typing-opp-count').innerHTML = typingOppCount + ' <span class="text-sm font-normal" style="color:#4a4768;">words</span>';
-}
-
-function onTypingOver(data) {
-    clearInterval(typingTimerInterval);
-    activeGameId = null;
-    typingGameId = null;
-    document.getElementById('typing-input').disabled = true;
-    document.getElementById('typing-timer').textContent = '0:00';
-
-    const resultEl = document.getElementById('typing-result');
-    resultEl.classList.remove('hidden');
-
-    if (data.won === true) {
-        addWinnings(data.payout);
-        resultEl.innerHTML = '🎉 You won! ' + data.your_score + ' vs ' + data.opp_score + ' words. +$' + data.payout.toFixed(2) + ' added!';
-        resultEl.style.color = '#22c55e';
-        resultEl.style.background = '#052e16';
-        resultEl.style.border = '1px solid #166534';
-    } else if (data.won === false) {
-        resultEl.innerHTML = '😔 You lost! ' + data.your_score + ' vs ' + data.opp_score + ' words. Better luck next time!';
-        resultEl.style.color = '#ef4444';
-        resultEl.style.background = '#1c0a0a';
-        resultEl.style.border = '1px solid #7f1d1d';
-    } else {
-        addWinnings(data.payout);
-        resultEl.innerHTML = "🤝 Tie! Both typed " + data.your_score + " words. Refunded $" + data.payout.toFixed(2);
-        resultEl.style.color = '#f59e0b';
-        resultEl.style.background = '#1c1200';
-        resultEl.style.border = '1px solid #92400e';
-    }
-    loadLeaderboard();
-}
-
-function closeTyping() {
-    clearInterval(typingTimerInterval);
-    document.getElementById('typing-modal').classList.add('hidden');
-    activeGameId = null;
-    typingGameId = null;
-}
 // ─── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
     initSupabase();
@@ -1368,27 +1141,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('rematch-btn').classList.add('hidden');
         openCreateModal(currentEntryFee);
         closeRPS();
-    });
-    document.getElementById('typing-input').addEventListener('keydown', handleTypingInput);
-    document.getElementById('typing-input').addEventListener('input', (e) => {
-        const typed = document.getElementById('typing-input').value;
-        const word = typingWords[typingIndex % typingWords.length];
-        if (word) updateLetterDots(typed, word);
-    });
-    document.getElementById('leave-typing-btn').addEventListener('click', closeTyping);
-    document.getElementById('typing-input').addEventListener('paste', e => e.preventDefault());
-    document.querySelectorAll('.game-type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById('game-type-select').value = btn.dataset.type;
-            document.querySelectorAll('.game-type-btn').forEach(b => {
-                b.style.background = '#1a1828';
-                b.style.border = '1px solid #2a2740';
-                b.style.color = '#6b6888';
-            });
-            btn.style.background = '#1a1535';
-            btn.style.border = '2px solid #7c3aed';
-            btn.style.color = '#a78bfa';
-        });
     });
     // Auth state
     db.auth.onAuthStateChange((event, session) => {
