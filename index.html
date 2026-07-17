@@ -535,7 +535,7 @@ async function handleSession(session) {
 async function saveUsername() {
     const username = document.getElementById('username-input').value.trim();
     if (!username) { alert('Please enter a username'); return; }
-    const r = await db.from('profiles').insert({ id: currentUser.id, username, wallet: 0 });
+    const r = await db.from('profiles').insert({ id: currentUser.id, username });
     if (r.error) {
         if (r.error.code === '23505') alert('Username taken! Try another.');
         else alert('Error: ' + r.error.message);
@@ -588,7 +588,7 @@ function connectWebSocket() {
         const s = await db.auth.getSession();
         const token = s.data && s.data.session ? s.data.session.access_token : null;
         if (token && userProfile) {
-            wsSend({ action: 'auth', token, username: userProfile.username });
+            wsSend({ action: 'auth', token, user_id: currentUser.id, username: userProfile.username });
         }
     };
     ws.onmessage = (e) => handleMessage(JSON.parse(e.data));
@@ -758,6 +758,7 @@ function onMatchStarted(data) {
     myGameId = null;
     currentEntryFee = data.entry_fee;
     opponentName = data.opponent;
+    setWalletDisplay(data.balance);
     myScore = 0; oppScore = 0; myMoveChosen = null; waitingForOppMove = false;
 
     document.getElementById('my-game-banner').classList.add('hidden');

@@ -351,7 +351,11 @@ async def handler(websocket):
 
             # ── Authenticate this connection (Supabase JWT) ────────────
             if action == "auth":
-                user_id, _email = await verify_token(data.get("token"))
+                if not SUPABASE_KEY:
+                    # Dev mode (no key): trust the client-supplied id.
+                    user_id = data.get("user_id") or str(uuid.uuid4())
+                else:
+                    user_id, _email = await verify_token(data.get("token"))
                 if not user_id:
                     await send_err(websocket, "Login verification failed. Refresh and sign in again.")
                     continue
